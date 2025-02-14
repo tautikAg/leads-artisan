@@ -4,6 +4,8 @@ from app.db.database import init_db
 from fastapi import FastAPI
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
+from app.api.v1.api import api_router
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -30,6 +32,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include API routes
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 
 # Health check endpoint
