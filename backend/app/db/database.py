@@ -1,34 +1,35 @@
-from motor.motor_asyncio import AsyncIOMotorClient
-from typing import Optional
-from app.core.config import settings
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
+from ..core.config import settings
 
-_client: Optional[AsyncIOMotorClient] = None
+class Database:
+    client: AsyncIOMotorClient = None
+    db: AsyncIOMotorDatabase = None
 
-def get_database():
-    """
-    Get database instance
-    """
-    global _client
-    if not _client:
-        _client = AsyncIOMotorClient(settings.MONGODB_URI)
-    return _client[settings.MONGODB_DATABASE]
+    def connect(self):
+        """Create database connection."""
+        self.client = AsyncIOMotorClient(settings.MONGODB_URI)
+        self.db = self.client[settings.MONGODB_DATABASE]
+        print("Connected to MongoDB")
 
-def close_database():
-    """
-    Close database connection
-    """
-    global _client
-    if _client:
-        _client.close()
-        _client = None
+    def close(self):
+        """Close database connection."""
+        if self.client:
+            self.client.close()
+            print("Closed MongoDB connection")
+
+# Create a global instance
+db = Database()
+db.connect()
+
+def get_database() -> AsyncIOMotorDatabase:
+    return db.db
 
 def init_db():
     """
     Initialize database connection
     """
     try:
-        client = AsyncIOMotorClient(settings.MONGODB_URI)
-        client.admin.command('ping')
+        db.client.admin.command('ping')
         print("Successfully connected to the MongoDB database")
     except Exception as e:
         print(f"Error connecting to the MongoDB database: {e}")

@@ -94,13 +94,13 @@ class LeadUpdate(BaseModel):
     Model for updating existing leads
     All fields are optional
     """
-    name: Optional[str] = Field(None, min_length=1, max_length=100)
+    name: Optional[str] = None
     email: Optional[EmailStr] = None
-    company: Optional[str] = Field(None, min_length=1, max_length=100)
-    status: Optional[str] = Field(None, max_length=50)
-    engaged: Optional[bool] = None
+    company: Optional[str] = None
     current_stage: Optional[LeadStage] = None
+    engaged: Optional[bool] = None
     last_contacted: Optional[datetime] = None
+    status: Optional[str] = None
 
 class StageChange(BaseModel):
     """
