@@ -4,12 +4,13 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
 import StageProgress from './StageProgress'
 import LeadDetailsSheet from './LeadDetailsSheet'
+import { Menu, Transition } from '@headlessui/react'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -250,7 +251,9 @@ export default function LeadList({
       <div className="px-4 sm:px-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Leads</h1>
-          <div className="flex gap-3">
+          
+          {/* Desktop Actions */}
+          <div className="hidden sm:flex gap-3">
             <button 
               onClick={onAddLead}
               className="flex-1 sm:flex-none inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
@@ -258,7 +261,62 @@ export default function LeadList({
               <Plus className="w-4 h-4 mr-2" />
               Add Lead
             </button>
-            <ExportMenu onExport={() => exportToCSV(leads)} />
+            <ExportMenu leads={leads} />
+          </div>
+
+          {/* Mobile Actions Menu */}
+          <div className="sm:hidden absolute right-4 top-4 z-30">
+            <Menu as="div" className="relative">
+              <Menu.Button className="p-2 hover:bg-gray-50 rounded-full">
+                <MoreVertical className="h-5 w-5 text-gray-400" />
+              </Menu.Button>
+
+              <Transition
+                enter="transition duration-100 ease-out"
+                enterFrom="transform scale-95 opacity-0"
+                enterTo="transform scale-100 opacity-100"
+                leave="transition duration-75 ease-in"
+                leaveFrom="transform scale-100 opacity-100"
+                leaveTo="transform scale-95 opacity-0"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={onAddLead}
+                        className={`
+                          flex w-full items-center px-4 py-2 text-sm
+                          ${active ? 'bg-gray-50' : ''}
+                        `}
+                      >
+                        <Plus className="h-4 w-4 mr-3 text-gray-400" />
+                        Add Lead
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={() => exportToCSV(leads)}
+                        className={`
+                          flex w-full items-center px-4 py-2 text-sm
+                          ${active ? 'bg-gray-50' : ''}
+                        `}
+                      >
+                        <svg 
+                          className="h-4 w-4 mr-3 text-gray-400" 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+                        </svg>
+                        Export All
+                      </button>
+                    )}
+                  </Menu.Item>
+                </Menu.Items>
+              </Transition>
+            </Menu>
           </div>
         </div>
 
