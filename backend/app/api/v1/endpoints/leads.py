@@ -4,16 +4,24 @@ from app.crud.lead import lead
 from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
 import math
 from ....crud.lead import CRUDLead
+from enum import Enum
 
 router = APIRouter()
 lead_crud = CRUDLead()
+
+class SortField(str, Enum):
+    name = "name"
+    company = "company"
+    current_stage = "current_stage"
+    last_contacted = "last_contacted"
+    created_at = "created_at"
 
 @router.get("/", response_model=LeadPaginatedResponse)
 async def get_leads(
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    sort_by: str = Query("created_at", regex="^(name|email|company|created_at|last_contacted)$"),
-    sort_desc: bool = Query(True),
+    sort_by: SortField = Query(SortField.created_at, description="Field to sort by"),
+    sort_desc: bool = Query(True, description="Sort in descending order"),
     search: Optional[str] = Query(None, min_length=1)
 ) -> LeadPaginatedResponse:
     """
@@ -26,7 +34,7 @@ async def get_leads(
         items = await lead.get_multi(
             skip=skip,
             limit=page_size,
-            sort_by=sort_by,
+            sort_by=sort_by.value,
             sort_desc=sort_desc,
             search=search
         )

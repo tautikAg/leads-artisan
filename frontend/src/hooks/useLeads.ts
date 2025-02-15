@@ -23,22 +23,19 @@ interface UseLeadsReturn {
   isUpdating: boolean;
   sort: { field: string; direction: 'asc' | 'desc' };
   onSort: (field: string, direction: 'asc' | 'desc') => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (limit: number) => void;
+  onSearch: (search: string) => void;
 }
 
-export function useLeads(filters: LeadFilters): UseLeadsReturn {
+export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
+  const [filters, setFilters] = useState<LeadFilters>(initialFilters);
   const queryClient = useQueryClient();
-  const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
-    field: 'created_at',
-    direction: 'desc'
-  });
 
   const query = useQuery({
     queryKey: ['leads', filters],
     queryFn: () => leadsApi.getLeads(filters),
-    staleTime: 1000 * 60, // Cache results for 1 minute
-    placeholderData: (previousData) => previousData, // Use previous data while fetching
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
-    retry: false, // Don't retry failed requests automatically
+    staleTime: 1000 * 60,
   });
 
   // Prefetch next page
@@ -87,9 +84,12 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
   };
 
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
-    setSort({ field, direction });
-    // Reset to first page when sorting changes
-    setCurrentPage(1);
+    setFilters(prev => ({
+      ...prev,
+      sortBy: field,
+      sortDesc: direction === 'desc',
+      page: 1 // Reset to first page when sorting changes
+    }));
   };
 
   return {
@@ -105,7 +105,13 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     deleteLead: deleteMutation.mutate,
     exportLeads,
     isUpdating: updateMutation.isPending,
-    sort,
+    sort: {
+      field: filters.sortBy ?? 'created_at',
+      direction: filters.sortDesc ? 'desc' : 'asc'
+    },
     onSort: handleSort,
+    onPageChange: (page: number) => setFilters(prev => ({ ...prev, page })),
+    onPageSizeChange: (limit: number) => setFilters(prev => ({ ...prev, limit, page: 1 })),
+    onSearch: (search: string) => setFilters(prev => ({ ...prev, search, page: 1 }))
   };
 }
