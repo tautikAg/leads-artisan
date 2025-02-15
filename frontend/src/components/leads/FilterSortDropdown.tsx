@@ -18,7 +18,6 @@ interface FilterSortDropdownProps {
 const sortOptions = [
   { label: 'Name', field: 'name' },
   { label: 'Company', field: 'company' },
-  { label: 'Stage', field: 'current_stage' },
   { label: 'Last Contacted', field: 'last_contacted' }
 ]
 
