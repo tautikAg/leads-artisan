@@ -1,21 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { X, CheckCircle2 } from 'lucide-react'
-import { LeadStage } from '../../types/lead'
+import { Lead, LeadStage, LeadUpdate } from '../../types/lead'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 
-interface AddLeadModalProps {
+interface EditLeadModalProps {
+  lead: Lead
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: {
-    name: string
-    email: string
-    company: string
-    current_stage: LeadStage
-    status: string
-    engaged: boolean
-    last_contacted: string
-  }) => void
+  onSubmit: (id: string, data: LeadUpdate) => void
   isLoading?: boolean
 }
 
@@ -91,25 +84,35 @@ const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputEleme
   </div>
 )
 
-export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: AddLeadModalProps) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [company, setCompany] = useState('')
-  const [currentStage, setCurrentStage] = useState<LeadStage>("New Lead")
-  const [engaged, setEngaged] = useState(false)
-  const [lastContacted, setLastContacted] = useState<Date | null>(new Date())
+export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoading }: EditLeadModalProps) {
+  const [name, setName] = useState(lead.name)
+  const [email, setEmail] = useState(lead.email)
+  const [company, setCompany] = useState(lead.company)
+  const [currentStage, setCurrentStage] = useState<LeadStage>(lead.current_stage)
+  const [engaged, setEngaged] = useState(lead.engaged)
+  const [lastContacted, setLastContacted] = useState<Date>(new Date(lead.last_contacted))
+
+  // Update form when lead changes
+  useEffect(() => {
+    setName(lead.name)
+    setEmail(lead.email)
+    setCompany(lead.company)
+    setCurrentStage(lead.current_stage)
+    setEngaged(lead.engaged)
+    setLastContacted(new Date(lead.last_contacted))
+  }, [lead])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit({
+    const updateData: LeadUpdate = {
       name,
       email,
       company,
       current_stage: currentStage,
-      status: engaged ? "Engaged" : "Not Engaged",
       engaged,
-      last_contacted: lastContacted?.toISOString() || new Date().toISOString()
-    })
+      last_contacted: lastContacted.toISOString()
+    }
+    onSubmit(lead.id, updateData)
   }
 
   if (!isOpen) return null
@@ -125,7 +128,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
+              <h2 className="text-xl font-semibold text-gray-900">Edit Lead</h2>
               <button
                 onClick={onClose}
                 className="text-gray-400 hover:text-gray-500 p-1 rounded-full hover:bg-gray-50"
@@ -174,7 +177,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <div className="relative">
                   <DatePicker
                     selected={lastContacted}
-                    onChange={(date) => setLastContacted(date)}
+                    onChange={(date) => setLastContacted(date as Date)}
                     showTimeSelect
                     timeFormat="HH:mm"
                     timeIntervals={15}
@@ -188,16 +191,6 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                     calendarClassName="date-picker-calendar"
                     popperClassName="date-picker-popper"
                     popperPlacement="bottom-start"
-                    timeCaption="Time"
-                    popperModifiers={[
-                      {
-                        name: "offset",
-                        enabled: true,
-                        options: {
-                          offset: [0, 8]
-                        }
-                      } as any
-                    ]}
                   />
                 </div>
               </div>
@@ -298,7 +291,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 disabled={isLoading}
                 className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
               >
-                Add Lead
+                Save Changes
               </button>
             </div>
           </form>

@@ -6,7 +6,7 @@ import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
 
 interface LeadListProps {
-  leads: Lead[]
+  initialLeads: Lead[]
   isLoading: boolean
   totalLeads: number
   currentPage: number
@@ -21,7 +21,7 @@ interface LeadListProps {
 }
 
 export default function LeadList({ 
-  leads, 
+  initialLeads = [],
   isLoading,
   totalLeads,
   currentPage,
@@ -36,6 +36,7 @@ export default function LeadList({
 }: LeadListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
+  const [leads, setLeads] = useState<Lead[]>(initialLeads)
 
   // Debounce the search callback
   const debouncedSearch = useMemo(
@@ -68,6 +69,23 @@ export default function LeadList({
     { label: '20 per page', value: 20 },
     { label: '50 per page', value: 50 }
   ]
+
+  const handleLeadDelete = (id: string) => {
+    // Implement the delete logic
+  }
+
+  const handleLeadUpdate = (updatedLead: Lead) => {
+    setLeads(prevLeads => 
+      prevLeads.map(lead => 
+        lead.id === updatedLead.id ? updatedLead : lead
+      )
+    )
+  }
+
+  // Update leads when initialLeads changes
+  useEffect(() => {
+    setLeads(initialLeads)
+  }, [initialLeads])
 
   if (isLoading) {
     return <div className="animate-pulse space-y-4">
@@ -127,104 +145,119 @@ export default function LeadList({
       </div>
 
       {/* Table Section */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th scope="col" className="w-8 py-3 pl-6">
-                <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
-              </th>
-              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Company
-              </th>
-              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Stage
-              </th>
-              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Engaged
-              </th>
-              <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Last Contacted
-              </th>
-              <th scope="col" className="w-8 py-3 pr-6">
-                <span className="sr-only">Actions</span>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {leads.map((lead) => (
-              <LeadItem 
-                key={lead.id} 
-                lead={lead} 
-                onDelete={onDeleteLead}
-              />
-            ))}
-          </tbody>
-        </table>
-
-        {/* Pagination Section */}
-        <div className="px-6 py-4 border-t border-gray-200">
-          <div className="grid grid-cols-3 items-center">
-            <div className="justify-self-start">
-              <Select
-                value={pageSize}
-                onChange={(value) => onPageSizeChange(Number(value))}
-                options={pageSizeOptions}
-              />
+      <div className="mt-4">
+        <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+          <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+              <table className="min-w-full divide-y divide-gray-300">
+                <thead>
+                  <tr>
+                    <th scope="col" className="w-8 py-3 pl-6">
+                      <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Company
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stage
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Engaged
+                    </th>
+                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Last Contacted
+                    </th>
+                    <th scope="col" className="w-8 py-3 pr-6">
+                      <span className="sr-only">Actions</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 bg-white">
+                  {Array.isArray(leads) && leads.length > 0 ? (
+                    leads.map((lead) => (
+                      <LeadItem 
+                        key={lead.id} 
+                        lead={lead} 
+                        onDelete={onDeleteLead}
+                        onUpdate={handleLeadUpdate}
+                      />
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="py-4 text-center text-gray-500">
+                        {isLoading ? 'Loading...' : 'No leads found'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <button
-                className="p-2"
-                onClick={() => onPageChange(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1)
-                .filter(pageNum => 
-                  pageNum === 1 || 
-                  pageNum === totalPages || 
-                  (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                )
-                .map((pageNum, index, array) => {
-                  if (index > 0 && pageNum - array[index - 1] > 1) {
-                    return <span key={`ellipsis-${pageNum}`} className="px-2">...</span>;
-                  }
-                  return (
-                    <button
-                      key={pageNum}
-                      className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
-                        currentPage === pageNum
-                          ? 'bg-purple-600 text-white'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                      onClick={() => onPageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                })}
-
-              <button
-                className="p-2"
-                onClick={() => onPageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-            </div>
-
-            <div></div>
           </div>
+        </div>
+      </div>
+
+      {/* Pagination Section */}
+      <div className="px-6 py-4 border-t border-gray-200">
+        <div className="grid grid-cols-3 items-center">
+          <div className="justify-self-start">
+            <Select
+              value={pageSize}
+              onChange={(value) => onPageSizeChange(Number(value))}
+              options={pageSizeOptions}
+            />
+          </div>
+
+          <div className="flex items-center justify-center gap-2">
+            <button
+              className="p-2"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(pageNum => 
+                pageNum === 1 || 
+                pageNum === totalPages || 
+                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+              )
+              .map((pageNum, index, array) => {
+                if (index > 0 && pageNum - array[index - 1] > 1) {
+                  return <span key={`ellipsis-${pageNum}`} className="px-2">...</span>;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
+                      currentPage === pageNum
+                        ? 'bg-purple-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                    onClick={() => onPageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+            <button
+              className="p-2"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <div></div>
         </div>
       </div>
     </div>

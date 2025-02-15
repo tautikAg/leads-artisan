@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
+from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
 from app.models.lead import Lead, LeadCreate, LeadUpdate, StageChange
 from app.db.database import get_database
 
@@ -9,30 +10,27 @@ class CRUDLead:
     Async CRUD operations for Lead model using MongoDB
     """
     def __init__(self):
-        self.db = get_database()
-        self.collection = self.db.leads
+        self.collection_name = "leads"
 
-    def _convert_id(self, lead_data: dict) -> dict:
-        """Helper method to convert MongoDB _id to string id"""
-        if lead_data and "_id" in lead_data:
-            lead_data["id"] = str(lead_data.pop("_id"))
-        return lead_data
+    def get_collection(self) -> AsyncIOMotorCollection:
+        db = get_database()
+        return db[self.collection_name]
 
-    async def get(self, lead_id: str) -> Optional[Lead]:
-        """Get a single lead by ID"""
-        try:
-            lead_data = await self.collection.find_one({"_id": ObjectId(lead_id)})
-            if lead_data:
-                return Lead(**self._convert_id(lead_data))
-        except Exception as e:
-            print(f"Error fetching lead: {e}")
+    async def get(self, id: str) -> Optional[Lead]:
+        collection = self.get_collection()
+        lead_dict = await collection.find_one({"_id": ObjectId(id)})
+        if lead_dict:
+            lead_dict["id"] = str(lead_dict.pop("_id"))
+            return Lead(**lead_dict)
         return None
 
     async def get_by_email(self, email: str) -> Optional[Lead]:
         """Get a single lead by email"""
-        lead_data = await self.collection.find_one({"email": email})
-        if lead_data:
-            return Lead(**self._convert_id(lead_data))
+        collection = self.get_collection()
+        lead_dict = await collection.find_one({"email": email})
+        if lead_dict:
+            lead_dict["id"] = str(lead_dict.pop("_id"))
+            return Lead(**lead_dict)
         return None
 
     async def get_multi(
@@ -44,6 +42,7 @@ class CRUDLead:
         search: Optional[str] = None
     ) -> List[Lead]:
         """Get multiple leads with simple filtering"""
+        collection = self.get_collection()
         filter_query = {}
         if search:
             filter_query = {
@@ -55,7 +54,7 @@ class CRUDLead:
             }
 
         # Simple find with sort and limit
-        cursor = self.collection.find(filter_query)
+        cursor = collection.find(filter_query)
         cursor = cursor.sort(sort_by, -1 if sort_desc else 1)
         cursor = cursor.skip(skip).limit(limit)
         
@@ -64,6 +63,7 @@ class CRUDLead:
 
     async def create(self, lead_data: LeadCreate) -> Lead:
         """Create a new lead"""
+        collection = self.get_collection()
         # Convert the model to dict and add timestamps
         lead_dict = lead_data.dict(exclude_none=True)
         lead_dict.update({
@@ -78,46 +78,52 @@ class CRUDLead:
         })
         
         # Insert into database
-        result = await self.collection.insert_one(lead_dict)
+        result = await collection.insert_one(lead_dict)
         
         # Fetch the created document
-        created_lead = await self.collection.find_one({"_id": result.inserted_id})
+        created_lead = await collection.find_one({"_id": result.inserted_id})
         
         # Convert ObjectId to string for the id field
         created_lead["id"] = str(created_lead.pop("_id"))
         
         return Lead(**created_lead)
 
-    async def update(self, id: str, lead_update: LeadUpdate) -> Optional[Lead]:
-        """Update an existing lead"""
-        update_dict = lead_update.model_dump(exclude_unset=True)
+    async def update(self, id: str, update_data: Dict[str, Any]) -> Optional[Lead]:
+        collection = self.get_collection()
         
-        if "current_stage" in update_dict:
+        # Remove None values from update_data
+        update_data = {k: v for k, v in update_data.items() if v is not None}
+        
+        # Add updated_at timestamp
+        update_data["updated_at"] = datetime.utcnow()
+
+        # Handle stage changes if current_stage is being updated
+        if "current_stage" in update_data:
             current_lead = await self.get(id)
-            if current_lead and current_lead.current_stage != update_dict["current_stage"]:
+            if current_lead and current_lead.current_stage != update_data["current_stage"]:
                 stage_change = {
                     "from_stage": current_lead.current_stage,
-                    "to_stage": update_dict["current_stage"],
+                    "to_stage": update_data["current_stage"],
                     "changed_at": datetime.utcnow()
                 }
-                update_dict["stage_updated_at"] = datetime.utcnow()
-                update_dict["stage_history"] = current_lead.stage_history + [stage_change]
-
-        update_dict["updated_at"] = datetime.utcnow()
+                update_data["stage_updated_at"] = datetime.utcnow()
+                update_data.setdefault("stage_history", []).append(stage_change)
         
-        result = await self.collection.find_one_and_update(
+        result = await collection.find_one_and_update(
             {"_id": ObjectId(id)},
-            {"$set": update_dict},
+            {"$set": update_data},
             return_document=True
         )
         
         if result:
-            return Lead.model_validate(result)
+            result["id"] = str(result.pop("_id"))
+            return Lead(**result)
         return None
 
     async def delete(self, lead_id: str) -> Optional[Lead]:
         """Delete a lead"""
-        lead_data = await self.collection.find_one_and_delete(
+        collection = self.get_collection()
+        lead_data = await collection.find_one_and_delete(
             {"_id": ObjectId(lead_id)}
         )
         if lead_data:
@@ -126,6 +132,7 @@ class CRUDLead:
 
     async def get_count(self, search: Optional[str] = None) -> int:
         """Get total count of leads, optionally filtered by search"""
+        collection = self.get_collection()
         filter_query = {}
         if search:
             filter_query = {
@@ -135,7 +142,13 @@ class CRUDLead:
                     {"company": {"$regex": search, "$options": "i"}}
                 ]
             }
-        return await self.collection.count_documents(filter_query)
+        return await collection.count_documents(filter_query)
 
-# Global instance
+    def _convert_id(self, lead_data: dict) -> dict:
+        """Helper method to convert MongoDB _id to string id"""
+        if lead_data and "_id" in lead_data:
+            lead_data["id"] = str(lead_data.pop("_id"))
+        return lead_data
+
+# Create a global instance
 lead = CRUDLead() 

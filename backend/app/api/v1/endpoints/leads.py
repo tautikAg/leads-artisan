@@ -3,8 +3,10 @@ from fastapi import APIRouter, HTTPException, Query
 from app.crud.lead import lead
 from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
 import math
+from ....crud.lead import CRUDLead
 
 router = APIRouter()
+lead_crud = CRUDLead()
 
 @router.get("/", response_model=LeadPaginatedResponse)
 async def get_leads(
@@ -69,15 +71,19 @@ def get_lead(lead_id: str) -> Lead:
     return db_lead
 
 @router.put("/{lead_id}", response_model=Lead)
-async def update_lead(lead_id: str, lead_in: LeadUpdate) -> Lead:
-    """Update an existing lead"""
+async def update_lead(lead_id: str, lead_update: LeadUpdate):
     try:
-        updated_lead = await lead.update(lead_id=lead_id, obj_in=lead_in)
+        # Convert Pydantic model to dict, excluding unset values
+        update_data = lead_update.model_dump(exclude_unset=True)
+        
+        updated_lead = await lead_crud.update(
+            id=lead_id,
+            update_data=update_data
+        )
+        
         if not updated_lead:
-            raise HTTPException(
-                status_code=404,
-                detail="Lead not found"
-            )
+            raise HTTPException(status_code=404, detail="Lead not found")
+            
         return updated_lead
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

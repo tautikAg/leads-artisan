@@ -1,6 +1,6 @@
 #here we will initialise the app, create the database connection and add the routes
 from contextlib import asynccontextmanager
-from app.db.database import init_db
+from app.db.database import db
 from fastapi import FastAPI
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,7 +12,7 @@ async def lifespan(app: FastAPI):
     Lifecycle manager for the FastAPI application.
     Runs database initialization when the app starts.
     """
-    init_db()  # Initialize MongoDB connection
+    db.connect()
     yield
 
 
@@ -32,6 +32,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.on_event("startup")
+async def startup_db_client():
+    db.connect()
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    db.close()
 
 # Include API routes
 app.include_router(api_router, prefix=settings.API_V1_STR)

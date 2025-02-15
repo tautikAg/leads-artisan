@@ -1,5 +1,5 @@
 import { api } from './axios';
-import { Lead, LeadCreate, LeadUpdate, LeadFilters } from '../types/lead';
+import { Lead, LeadCreate, LeadUpdate, LeadFilters, LeadStage } from '../types/lead';
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -47,9 +47,18 @@ export const leadsApi = {
     return data;
   },
 
-  updateLead: async (id: string, lead: LeadUpdate) => {
-    const { data } = await api.put<Lead>(`/leads/${id}`, lead);
-    return data;
+  updateLead: async (id: string, data: LeadUpdate) => {
+    try {
+      const { data: updatedLead } = await api.put<Lead>(`/leads/${id}/`, {
+        ...data,
+        status: data.engaged ? "Engaged" : "Not Engaged",
+        stage_updated_at: new Date().toISOString(),
+      })
+      return updatedLead
+    } catch (error) {
+      console.error('Error updating lead:', error)
+      throw error
+    }
   },
 
   deleteLead: async (id: string) => {
