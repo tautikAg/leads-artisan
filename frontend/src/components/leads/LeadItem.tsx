@@ -8,11 +8,10 @@ import LeadDetailsSheet from './LeadDetailsSheet'
 
 interface LeadItemProps {
   lead: Lead
-  onEdit?: (lead: Lead) => void
-  onDelete?: (id: string) => void
+  onDelete: (id: string) => void
 }
 
-export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
+export default function LeadItem({ lead, onDelete }: LeadItemProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
@@ -20,7 +19,7 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
+    function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
         setShowMenu(false)
       }
@@ -29,6 +28,16 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Don't open details if clicking the checkbox or menu
+    if (
+      !menuRef.current?.contains(e.target as Node) && 
+      !(e.target as HTMLElement).closest('input[type="checkbox"]')
+    ) {
+      setShowDetails(true)
+    }
+  }
 
   const getInitials = (name: string) => {
     return name
@@ -48,11 +57,14 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
   return (
     <>
       <tr 
-        className="hover:bg-gray-50 cursor-pointer" 
-        onClick={() => setShowDetails(true)}
+        className="hover:bg-gray-50 cursor-pointer"
+        onClick={handleRowClick}
       >
-        <td className="py-4 pl-6">
-          <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+        <td className="py-4 pl-6" onClick={e => e.stopPropagation()}>
+          <input 
+            type="checkbox" 
+            className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+          />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
           <div className="flex items-center">
@@ -89,44 +101,44 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
           }
         </td>
         <td className="py-4 pr-6 relative">
-          <button
-            onClick={() => setShowMenu(!showMenu)}
-            className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
-          >
-            <MoreHorizontal className="h-5 w-5 text-gray-400" />
-          </button>
-
-          {showMenu && (
-            <div 
-              ref={menuRef}
-              className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 divide-y divide-gray-100"
+          <div ref={menuRef} className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation() // Prevent row click
+                setShowMenu(!showMenu)
+              }}
+              className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             >
-              <div className="py-1">
+              <MoreHorizontal className="h-5 w-5 text-gray-400" />
+            </button>
+
+            {showMenu && (
+              <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <button
-                  className="w-full px-4 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  onClick={() => {
-                    onEdit?.(lead)
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent row click
+                    // Add your edit functionality here
                     setShowMenu(false)
                   }}
+                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                 >
-                  <Edit2 className="h-4 w-4" />
-                  Edit
+                  <Edit2 className="mr-3 h-4 w-4" />
+                  Edit Lead
                 </button>
-              </div>
-              <div className="py-1">
                 <button
-                  className="w-full px-4 py-2 text-sm text-left text-red-600 hover:bg-red-50 flex items-center gap-2"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation() // Prevent row click
                     setShowDeleteConfirm(true)
                     setShowMenu(false)
                   }}
+                  className="flex w-full items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50"
                 >
-                  <Trash2 className="h-4 w-4" />
-                  Delete
+                  <Trash2 className="mr-3 h-4 w-4" />
+                  Delete Lead
                 </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </td>
       </tr>
 
@@ -134,11 +146,11 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
         isOpen={showDeleteConfirm}
         onClose={() => setShowDeleteConfirm(false)}
         onConfirm={() => {
-          onDelete?.(lead.id)
+          onDelete(lead.id)
           setShowDeleteConfirm(false)
         }}
         title="Delete Lead"
-        description={`Are you sure you want to delete ${lead.name}? This action cannot be undone.`}
+        description="Are you sure you want to delete this lead? This action cannot be undone."
         confirmText="Delete"
         cancelText="Cancel"
       />
