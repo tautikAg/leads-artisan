@@ -62,22 +62,31 @@ class CRUDLead:
         leads_data = await cursor.to_list(length=limit)
         return [Lead(**self._convert_id(lead)) for lead in leads_data]
 
-    async def create(self, lead: LeadCreate) -> Lead:
+    async def create(self, lead_data: LeadCreate) -> Lead:
         """Create a new lead"""
-        lead_dict = lead.model_dump()
+        # Convert the model to dict and add timestamps
+        lead_dict = lead_data.dict(exclude_none=True)
         lead_dict.update({
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
             "stage_updated_at": datetime.utcnow(),
             "stage_history": [{
                 "from_stage": None,
-                "to_stage": lead.current_stage,
+                "to_stage": lead_data.current_stage,
                 "changed_at": datetime.utcnow()
             }]
         })
         
+        # Insert into database
         result = await self.collection.insert_one(lead_dict)
-        return await self.get(str(result.inserted_id))
+        
+        # Fetch the created document
+        created_lead = await self.collection.find_one({"_id": result.inserted_id})
+        
+        # Convert ObjectId to string for the id field
+        created_lead["id"] = str(created_lead.pop("_id"))
+        
+        return Lead(**created_lead)
 
     async def update(self, id: str, lead_update: LeadUpdate) -> Optional[Lead]:
         """Update an existing lead"""

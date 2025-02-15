@@ -44,16 +44,16 @@ async def get_leads(
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/", response_model=Lead)
-async def create_lead(lead_in: LeadCreate) -> Lead:
+async def create_lead(lead_data: LeadCreate):
     """Create a new lead"""
     try:
-        db_lead = await lead.get_by_email(email=lead_in.email)
+        db_lead = await lead.get_by_email(email=lead_data.email)
         if db_lead:
             raise HTTPException(
                 status_code=400,
                 detail="A lead with this email already exists."
             )
-        return await lead.create(obj_in=lead_in)
+        return await lead.create(lead_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

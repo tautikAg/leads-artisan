@@ -33,8 +33,10 @@ export interface LeadCreate {
   name: string;
   email: string;
   company: string;
+  current_stage: LeadStage;
   status?: string;
-  engaged?: boolean;
+  engaged: boolean;
+  last_contacted: string;
 }
 
 export interface LeadUpdate {
