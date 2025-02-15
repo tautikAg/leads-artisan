@@ -1,27 +1,46 @@
 from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from app.crud.lead import lead
-from app.models.lead import Lead, LeadCreate, LeadUpdate
+from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
+import math
 
 router = APIRouter()
 
-@router.get("/", response_model=List[Lead])
+@router.get("/", response_model=LeadPaginatedResponse)
 def get_leads(
-    skip: int = Query(0, ge=0),
-    limit: int = Query(10, ge=1, le=100),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
     sort_by: str = Query("created_at", regex="^(name|email|company|created_at|last_contacted)$"),
     sort_desc: bool = Query(True),
     search: Optional[str] = Query(None, min_length=1)
-) -> List[Lead]:
+) -> LeadPaginatedResponse:
     """
     Get all leads with pagination, sorting, and search capabilities
     """
-    return lead.get_multi(
+    # Calculate skip from page and page_size
+    skip = (page - 1) * page_size
+
+    # Get total count for pagination
+    total_count = lead.get_count(search)
+    
+    # Get paginated results
+    items = lead.get_multi(
         skip=skip,
-        limit=limit,
+        limit=page_size,
         sort_by=sort_by,
         sort_desc=sort_desc,
         search=search
+    )
+
+    # Calculate total pages
+    total_pages = math.ceil(total_count / page_size)
+
+    return LeadPaginatedResponse(
+        items=items,
+        total=total_count,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages
     )
 
 @router.post("/", response_model=Lead)
