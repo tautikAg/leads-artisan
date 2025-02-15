@@ -52,9 +52,11 @@ class CRUDLead:
         sort_desc: bool = True,
         search: Optional[str] = None
     ) -> List[Lead]:
-        """Get multiple leads with simple filtering"""
+        """Get multiple leads with sorting and filtering"""
         collection = self.get_collection()
         filter_query = {}
+        
+        # Add search filter if provided
         if search:
             filter_query = {
                 "$or": [
@@ -64,9 +66,18 @@ class CRUDLead:
                 ]
             }
 
-        # Simple find with sort and limit
+        # Handle special sort cases
+        sort_field = {
+            "name": "name",
+            "company": "company",
+            "current_stage": "current_stage",
+            "last_contacted": "last_contacted",
+            "created_at": "created_at"
+        }.get(sort_by, "created_at")
+
+        # Create cursor with sort
         cursor = collection.find(filter_query)
-        cursor = cursor.sort(sort_by, -1 if sort_desc else 1)
+        cursor = cursor.sort(sort_field, -1 if sort_desc else 1)
         cursor = cursor.skip(skip).limit(limit)
         
         leads_data = await cursor.to_list(length=limit)

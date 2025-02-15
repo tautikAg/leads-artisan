@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/leads';
 import { LeadCreate, LeadUpdate, LeadFilters, Lead } from '../types/lead';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UpdateLeadParams {
   id: string;
@@ -21,18 +21,25 @@ interface UseLeadsReturn {
   deleteLead: (id: string) => void;
   exportLeads: () => void;
   isUpdating: boolean;
+  sort: { field: string; direction: 'asc' | 'desc' };
+  onSort: (field: string, direction: 'asc' | 'desc') => void;
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (limit: number) => void;
+  onSearch: (search: string) => void;
 }
 
-export function useLeads(filters: LeadFilters): UseLeadsReturn {
+export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
+  const [filters, setFilters] = useState<LeadFilters>(initialFilters);
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['leads', filters],
     queryFn: () => leadsApi.getLeads(filters),
-    staleTime: 1000 * 60, // Cache results for 1 minute
-    placeholderData: (previousData) => previousData, // Use previous data while fetching
-    refetchOnWindowFocus: false, // Prevent refetch on window focus
-    retry: false, // Don't retry failed requests automatically
+    staleTime: 1000 * 60,
+    keepPreviousData: true,
+    placeholderData: (previousData) => previousData,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
 
   // Prefetch next page
@@ -80,6 +87,15 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     }
   };
 
+  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+    setFilters(prev => ({
+      ...prev,
+      sortBy: field,
+      sortDesc: direction === 'desc',
+      page: 1 // Reset to first page when sorting changes
+    }));
+  };
+
   return {
     leads: query.data?.items ?? [],
     totalLeads: query.data?.total ?? 0,
@@ -92,6 +108,14 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     updateLead: updateMutation.mutate,
     deleteLead: deleteMutation.mutate,
     exportLeads,
-    isUpdating: updateMutation.isPending
+    isUpdating: updateMutation.isPending,
+    sort: {
+      field: filters.sortBy ?? 'created_at',
+      direction: filters.sortDesc ? 'desc' : 'asc'
+    },
+    onSort: handleSort,
+    onPageChange: (page: number) => setFilters(prev => ({ ...prev, page })),
+    onPageSizeChange: (limit: number) => setFilters(prev => ({ ...prev, limit, page: 1 })),
+    onSearch: (search: string) => setFilters(prev => ({ ...prev, search, page: 1 }))
   };
 }

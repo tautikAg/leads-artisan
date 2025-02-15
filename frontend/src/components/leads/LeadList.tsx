@@ -5,6 +5,7 @@ import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import FilterSortDropdown from './FilterSortDropdown'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -19,6 +20,11 @@ interface LeadListProps {
   onAddLead: () => void
   onExportAll: () => void
   onDeleteLead: (id: string) => void
+  onSort: (field: string, direction: 'asc' | 'desc') => void
+  currentSort: {
+    field: string
+    direction: 'asc' | 'desc'
+  }
 }
 
 export default function LeadList({ 
@@ -34,6 +40,8 @@ export default function LeadList({
   onAddLead,
   onExportAll,
   onDeleteLead,
+  onSort,
+  currentSort,
 }: LeadListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -85,17 +93,21 @@ export default function LeadList({
   }, [initialLeads])
 
   if (isLoading) {
-    return <div className="animate-pulse space-y-4">
-      {[...Array(pageSize)].map((_, i) => (
-        <div key={i} className="h-16 bg-gray-100 rounded-md" />
-      ))}
-    </div>
+    return (
+      <div className="space-y-4">
+        {Array.from({ length: pageSize }).map((_, i) => (
+          <div key={i} className="animate-pulse">
+            <div className="h-20 bg-gray-100 rounded-md"></div>
+          </div>
+        ))}
+      </div>
+    )
   }
 
   return (
     <div>
       {/* Header Section */}
-      <div className="mb-6">
+      <div className="">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold text-gray-900">Leads</h1>
           <div className="flex gap-3">
@@ -125,15 +137,10 @@ export default function LeadList({
             onChange={handleSearchChange}
           />
           
-          <button 
-            type="button"
-            className="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-all"
-          >
-            <svg className="w-4 h-4 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M3 3a1 1 0 011-1h12a1 1 0 011 1v3a1 1 0 01-.293.707L12 11.414V15a1 1 0 01-.293.707l-2 2A1 1 0 018 17v-5.586L3.293 6.707A1 1 0 013 6V3z" clipRule="evenodd"/>
-            </svg>
-            Filter & Sort
-          </button>
+          <FilterSortDropdown 
+            onSort={onSort}
+            currentSort={currentSort}
+          />
         </form>
 
         <div className="mt-4 text-sm text-gray-500">
@@ -142,7 +149,7 @@ export default function LeadList({
       </div>
 
       {/* Table Section */}
-      <div className="mt-4">
+      <div className="">
         <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
