@@ -1,26 +1,35 @@
-from pymongo import MongoClient
-from pymongo.server_api import ServerApi
+from motor.motor_asyncio import AsyncIOMotorClient
+from typing import Optional
 from app.core.config import settings
 
+_client: Optional[AsyncIOMotorClient] = None
 
 def get_database():
     """
-    Get the database connection
+    Get database instance
     """
-    client = MongoClient(settings.MONGODB_URI, server_api=ServerApi("1"))
-    return client[settings.MONGODB_DATABASE]
+    global _client
+    if not _client:
+        _client = AsyncIOMotorClient(settings.MONGODB_URI)
+    return _client[settings.MONGODB_DATABASE]
 
+def close_database():
+    """
+    Close database connection
+    """
+    global _client
+    if _client:
+        _client.close()
+        _client = None
 
 def init_db():
     """
-    Initialize the database
-    test the connection to the database
-    Raise an exception if the connection fails
+    Initialize database connection
     """
     try:
-        client = MongoClient(settings.MONGODB_URI, server_api=ServerApi("1"))
+        client = AsyncIOMotorClient(settings.MONGODB_URI)
         client.admin.command('ping')
         print("Successfully connected to the MongoDB database")
     except Exception as e:
         print(f"Error connecting to the MongoDB database: {e}")
-        raise e
+        raise
