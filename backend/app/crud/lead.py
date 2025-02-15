@@ -131,8 +131,50 @@ class CRUDLead:
         # Add updated_at timestamp
         update_data["updated_at"] = datetime.utcnow()
 
+        # If stage_history is being updated directly
+        if "stage_history" in update_data:
+            # Create a new stage history list with proper datetime objects
+            new_stage_history = []
+            for stage in update_data["stage_history"]:
+                new_stage = stage.copy()  # Create a copy to avoid modifying the original
+                if stage.get("changed_at"):
+                    # Convert string to datetime if it's a string
+                    if isinstance(stage["changed_at"], str):
+                        try:
+                            new_stage["changed_at"] = datetime.fromisoformat(
+                                stage["changed_at"].replace('Z', '+00:00')
+                            )
+                        except ValueError:
+                            # If parsing fails, try another format
+                            try:
+                                new_stage["changed_at"] = datetime.strptime(
+                                    stage["changed_at"], 
+                                    "%Y-%m-%dT%H:%M:%S.%f"
+                                )
+                            except ValueError:
+                                # If all parsing fails, keep as None
+                                new_stage["changed_at"] = None
+                new_stage_history.append(new_stage)
+            
+            update_data["stage_history"] = new_stage_history
+
+            # Update stage_updated_at if provided
+            if "stage_updated_at" in update_data:
+                try:
+                    update_data["stage_updated_at"] = datetime.fromisoformat(
+                        update_data["stage_updated_at"].replace('Z', '+00:00')
+                    )
+                except (ValueError, AttributeError):
+                    # If parsing fails, use the last valid timestamp from stage history
+                    last_timestamp = next(
+                        (stage["changed_at"] for stage in reversed(new_stage_history) 
+                         if stage.get("changed_at")),
+                        datetime.utcnow()
+                    )
+                    update_data["stage_updated_at"] = last_timestamp
+
         # Handle stage changes if current_stage is being updated
-        if "current_stage" in update_data:
+        elif "current_stage" in update_data:
             current_lead = await self.get(id)
             if current_lead and current_lead.current_stage != update_data["current_stage"]:
                 # Get current stage history

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Lead } from '../../types/lead'
 import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import { Edit2, Mail, Phone, Building2, Calendar, Save, X } from 'lucide-react'
 import EditLeadModal from './EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
@@ -89,10 +89,14 @@ const StageHistoryItem = ({
                 <DatePicker
                   selected={editDate}
                   onChange={onDateChange}
-                  className="w-32 text-sm bg-transparent outline-none text-gray-600"
-                  dateFormat="MMM d, yyyy"
-                  placeholderText="Select date"
+                  className="w-36 text-sm bg-transparent outline-none text-gray-600"
+                  dateFormat="MMM d, yyyy h:mm aa"
+                  placeholderText="Select date & time"
                   calendarClassName="shadow-lg rounded-lg border-gray-200"
+                  showTimeSelect
+                  timeFormat="h:mm aa"
+                  timeIntervals={15}
+                  timeCaption="Time"
                 />
                 <div className="flex gap-1.5 border-l pl-1.5">
                   <button 
@@ -116,13 +120,13 @@ const StageHistoryItem = ({
               </div>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 min-w-[90px] text-right">
+                <span className="text-sm text-gray-500 min-w-[150px] text-right">
                   {formatDate(stage.changed_at)}
                 </span>
                 <button 
                   onClick={onEdit}
                   className="group p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200"
-                  title="Edit date"
+                  title="Edit date and time"
                 >
                   <Edit2 className="h-2.5 w-2.5 text-gray-400 group-hover:text-gray-600" />
                 </button>
@@ -155,10 +159,10 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
 
   if (!lead) return null
 
-  const formatDate = (date: string | null): string => {
-    if (!date) return "N/A"
+  const formatDateTime = (dateTime: string | null): string => {
+    if (!dateTime) return "N/A"
     try {
-      return format(new Date(date), 'MMM d, yyyy')
+      return format(parseISO(dateTime), 'MMM d, yyyy h:mm aa')
     } catch {
       return "N/A"
     }
@@ -275,7 +279,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                         editDate={editingStage?.date ?? null}
                         onDateChange={(date) => setEditingStage({ index: stageIdx, date })}
                         isUpdating={isUpdating}
-                        formatDate={formatDate}
+                        formatDate={formatDateTime}
                       />
                     </li>
                   ))}
@@ -296,13 +300,13 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                 <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                   <dt className="text-sm font-medium text-gray-500">Last Contacted</dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                    {formatDate(lead.last_contacted)}
+                    {formatDateTime(lead.last_contacted)}
                   </dd>
                 </div>
                 <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                   <dt className="text-sm font-medium text-gray-500">Created</dt>
                   <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                    {formatDate(lead.created_at)}
+                    {formatDateTime(lead.created_at)}
                   </dd>
                 </div>
               </dl>
