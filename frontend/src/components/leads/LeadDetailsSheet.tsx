@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Lead } from '../../types/lead'
+import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format } from 'date-fns'
-import { Edit2, Mail, Phone, Building2, Calendar } from 'lucide-react'
+import { Edit2, Mail, Phone, Building2, Calendar, Save, X } from 'lucide-react'
 import EditLeadModal from './EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
+import DatePicker from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
 
 interface LeadDetailsSheetProps {
   lead: Lead | null
@@ -12,9 +15,137 @@ interface LeadDetailsSheetProps {
   onClose: () => void
 }
 
+interface EditingStage {
+  index: number;
+  date: Date | null;
+}
+
+interface StageHistoryItemProps {
+  stage: StageHistoryItem;
+  stageIdx: number;
+  isLast: boolean;
+  isEditing: boolean;
+  onEdit: () => void;
+  onSave: () => void;
+  onCancel: () => void;
+  editDate: Date | null;
+  onDateChange: (date: Date | null) => void;
+  isUpdating: boolean;
+  formatDate: (date: string | null) => string;
+}
+
+const StageHistoryItem = ({ 
+  stage, 
+  stageIdx, 
+  isLast, 
+  isEditing, 
+  onEdit, 
+  onSave, 
+  onCancel, 
+  editDate, 
+  onDateChange,
+  isUpdating,
+  formatDate
+}: StageHistoryItemProps) => {
+  return (
+    <div className="relative pb-8">
+      {!isLast && (
+        <span
+          className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
+          aria-hidden="true"
+        />
+      )}
+      <div className="relative flex space-x-3">
+        <div>
+          <span className={`
+            h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
+            ${stage.changed_at ? 'bg-purple-100' : 'bg-gray-100'}
+            transition-colors duration-200
+          `}>
+            <div className={`
+              h-2.5 w-2.5 rounded-full 
+              ${stage.changed_at ? 'bg-purple-600' : 'bg-gray-400'}
+              transition-colors duration-200
+            `} />
+          </span>
+        </div>
+        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
+          <div className="flex-1">
+            <p className="text-sm text-gray-900 font-medium">
+              {stage.from_stage ? 
+                `Moved from ${stage.from_stage} to ${stage.to_stage}` : 
+                `Started as ${stage.to_stage}`
+              }
+            </p>
+            {stage.notes && (
+              <p className="mt-0.5 text-sm text-gray-500">
+                {stage.notes}
+              </p>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg border border-gray-200 p-1.5">
+                <DatePicker
+                  selected={editDate}
+                  onChange={onDateChange}
+                  className="w-32 text-sm bg-transparent outline-none text-gray-600"
+                  dateFormat="MMM d, yyyy"
+                  placeholderText="Select date"
+                  calendarClassName="shadow-lg rounded-lg border-gray-200"
+                />
+                <div className="flex gap-1.5 border-l pl-1.5">
+                  <button 
+                    onClick={onSave}
+                    className={`
+                      p-1.5 rounded-md text-green-600 hover:bg-green-50
+                      transition-colors duration-200
+                      ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
+                    `}
+                    disabled={isUpdating}
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                  </button>
+                  <button 
+                    onClick={onCancel}
+                    className="p-1.5 rounded-md text-gray-400 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-gray-500 min-w-[90px] text-right">
+                  {formatDate(stage.changed_at)}
+                </span>
+                <button 
+                  onClick={onEdit}
+                  className="group p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200"
+                  title="Edit date"
+                >
+                  <Edit2 className="h-2.5 w-2.5 text-gray-400 group-hover:text-gray-600" />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsSheetProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const { updateLead, isUpdating } = useLeads({ page: 1 })
+  const [editingStage, setEditingStage] = useState<EditingStage | null>(null)
+  const [stageHistory, setStageHistory] = useState<StageHistoryItem[]>([])
+
+  useEffect(() => {
+    if (lead) {
+      setStageHistory(lead.stage_history)
+    }
+  }, [lead])
 
   useEffect(() => {
     const handleCloseSheet = () => onClose()
@@ -24,7 +155,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
 
   if (!lead) return null
 
-  const formatDate = (date: string | null) => {
+  const formatDate = (date: string | null): string => {
     if (!date) return "N/A"
     try {
       return format(new Date(date), 'MMM d, yyyy')
@@ -40,6 +171,37 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
     } catch (error) {
       console.error('Failed to update lead:', error)
     }
+  }
+
+  const handleSaveStageDate = async (index: number) => {
+    if (!editingStage || !lead) return
+
+    const newHistory = [...stageHistory]
+    newHistory[index] = {
+      ...newHistory[index],
+      changed_at: editingStage.date?.toISOString() || null
+    }
+
+    try {
+      const updateData: LeadUpdate = {
+        stage_history: newHistory,
+        stage_updated_at: newHistory[newHistory.length - 1].changed_at || undefined
+      }
+
+      await updateLead({ 
+        id: lead.id, 
+        data: updateData
+      })
+      setStageHistory(newHistory)
+      setEditingStage(null)
+    } catch (error) {
+      console.error('Failed to update stage date:', error)
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingStage(null)
+    setStageHistory(lead.stage_history) // Reset to original
   }
 
   return (
@@ -95,49 +257,26 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
             {/* Stage History */}
             <div className="mb-6">
               <h3 className="text-sm font-medium text-gray-900">Stage History</h3>
-              <div className="mt-2 flow-root">
+              <div className="mt-4 flow-root">
                 <ul className="-mb-8">
-                  {lead.stage_history.map((stage, stageIdx) => (
+                  {stageHistory.map((stage, stageIdx) => (
                     <li key={`${stage.to_stage}-${stageIdx}`}>
-                      <div className="relative pb-8">
-                        {stageIdx !== lead.stage_history.length - 1 ? (
-                          <span
-                            className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
-                            aria-hidden="true"
-                          />
-                        ) : null}
-                        <div className="relative flex space-x-3">
-                          <div>
-                            <span className={`
-                              h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
-                              ${stage.changed_at ? 'bg-purple-100' : 'bg-gray-100'}
-                            `}>
-                              <div className={`
-                                h-2.5 w-2.5 rounded-full 
-                                ${stage.changed_at ? 'bg-purple-600' : 'bg-gray-400'}
-                              `} />
-                            </span>
-                          </div>
-                          <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-                            <div>
-                              <p className="text-sm text-gray-500">
-                                {stage.from_stage ? 
-                                  `Moved from ${stage.from_stage} to ${stage.to_stage}` : 
-                                  `Started as ${stage.to_stage}`
-                                }
-                              </p>
-                              {stage.notes && (
-                                <p className="mt-0.5 text-xs text-gray-400">
-                                  {stage.notes}
-                                </p>
-                              )}
-                            </div>
-                            <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                              {formatDate(stage.changed_at)}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <StageHistoryItem
+                        stage={stage}
+                        stageIdx={stageIdx}
+                        isLast={stageIdx === stageHistory.length - 1}
+                        isEditing={editingStage?.index === stageIdx}
+                        onEdit={() => setEditingStage({ 
+                          index: stageIdx, 
+                          date: stage.changed_at ? new Date(stage.changed_at) : null 
+                        })}
+                        onSave={() => handleSaveStageDate(stageIdx)}
+                        onCancel={handleCancelEdit}
+                        editDate={editingStage?.date ?? null}
+                        onDateChange={(date) => setEditingStage({ index: stageIdx, date })}
+                        isUpdating={isUpdating}
+                        formatDate={formatDate}
+                      />
                     </li>
                   ))}
                 </ul>
