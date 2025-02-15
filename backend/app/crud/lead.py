@@ -1,14 +1,25 @@
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
-from app.models.lead import Lead, LeadCreate, LeadUpdate, StageChange
+from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadStage, StageChange
 from app.db.database import get_database
 
 class CRUDLead:
     """
     Async CRUD operations for Lead model using MongoDB
     """
+    # Define stages in order of progression
+    STAGES: List[LeadStage] = [
+        "New Lead",
+        "Initial Contact",
+        "Meeting Scheduled",
+        "Proposal Sent",
+        "Negotiation",
+        "Closed Won",
+        "Closed Lost"
+    ]
+
     def __init__(self):
         self.collection_name = "leads"
 
@@ -61,29 +72,52 @@ class CRUDLead:
         leads_data = await cursor.to_list(length=limit)
         return [Lead(**self._convert_id(lead)) for lead in leads_data]
 
+    def _generate_stage_history(self, current_stage: LeadStage, base_time: datetime = None) -> List[Dict[str, Any]]:
+        """
+        Generate stage history up to the current stage
+        If base_time is None, we'll mark intermediate stages with None timestamps
+        """
+        current_index = self.STAGES.index(current_stage)
+        stage_history = []
+
+        # Generate history for all stages up to current_stage
+        for i in range(current_index + 1):
+            stage_change = {
+                "from_stage": self.STAGES[i-1] if i > 0 else None,
+                "to_stage": self.STAGES[i],
+                "changed_at": (base_time + timedelta(days=i*3)) if base_time else (
+                    datetime.utcnow() if i == current_index else None  # Only set time for current stage
+                ),
+                "notes": (
+                    f"Current stage: {self.STAGES[i]}" if i == current_index
+                    else f"Previous stage: {self.STAGES[i]}"
+                )
+            }
+            stage_history.append(stage_change)
+
+        return stage_history
+
     async def create(self, lead_data: LeadCreate) -> Lead:
-        """Create a new lead"""
+        """Create a new lead with proper stage history"""
         collection = self.get_collection()
-        # Convert the model to dict and add timestamps
+        
+        # Convert the model to dict
         lead_dict = lead_data.dict(exclude_none=True)
+        
+        # Generate stage history based on current_stage
+        stage_history = self._generate_stage_history(lead_data.current_stage)
+        
+        # Update lead data with timestamps and stage history
         lead_dict.update({
             "created_at": datetime.utcnow(),
             "updated_at": datetime.utcnow(),
-            "stage_updated_at": datetime.utcnow(),
-            "stage_history": [{
-                "from_stage": None,
-                "to_stage": lead_data.current_stage,
-                "changed_at": datetime.utcnow()
-            }]
+            "stage_updated_at": stage_history[-1]["changed_at"] if stage_history else datetime.utcnow(),
+            "stage_history": stage_history
         })
         
         # Insert into database
         result = await collection.insert_one(lead_dict)
-        
-        # Fetch the created document
         created_lead = await collection.find_one({"_id": result.inserted_id})
-        
-        # Convert ObjectId to string for the id field
         created_lead["id"] = str(created_lead.pop("_id"))
         
         return Lead(**created_lead)
@@ -101,14 +135,36 @@ class CRUDLead:
         if "current_stage" in update_data:
             current_lead = await self.get(id)
             if current_lead and current_lead.current_stage != update_data["current_stage"]:
+                # Get current stage history
+                stage_history = current_lead.stage_history
+
+                # Add new stage change
                 stage_change = {
                     "from_stage": current_lead.current_stage,
                     "to_stage": update_data["current_stage"],
-                    "changed_at": datetime.utcnow()
+                    "changed_at": datetime.utcnow(),
+                    "notes": f"Updated from {current_lead.current_stage} to {update_data['current_stage']}"
                 }
+                
+                # If moving forward in stages, add missing intermediate stages
+                curr_idx = self.STAGES.index(current_lead.current_stage)
+                new_idx = self.STAGES.index(update_data["current_stage"])
+                
+                if new_idx > curr_idx:
+                    # Add intermediate stages with None timestamps
+                    for i in range(curr_idx + 1, new_idx):
+                        intermediate_change = {
+                            "from_stage": self.STAGES[i-1],
+                            "to_stage": self.STAGES[i],
+                            "changed_at": None,  # No specific time for intermediate stages
+                            "notes": f"Intermediate stage between {current_lead.current_stage} and {update_data['current_stage']}"
+                        }
+                        stage_history.append(intermediate_change)
+                
+                stage_history.append(stage_change)
+                update_data["stage_history"] = stage_history
                 update_data["stage_updated_at"] = datetime.utcnow()
-                update_data.setdefault("stage_history", []).append(stage_change)
-        
+
         result = await collection.find_one_and_update(
             {"_id": ObjectId(id)},
             {"$set": update_data},
