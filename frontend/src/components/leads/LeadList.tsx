@@ -30,6 +30,101 @@ interface LeadListProps {
   }
 }
 
+// First, let's extract the pagination component to avoid duplication
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  pageSize, 
+  onPageChange, 
+  onPageSizeChange, 
+  pageSizeOptions 
+}: { 
+  currentPage: number
+  totalPages: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
+  pageSizeOptions: { label: string; value: number }[]
+}) => (
+  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div className="w-full sm:w-auto">
+      <Select
+        value={pageSize}
+        onChange={(value) => onPageSizeChange(Number(value))}
+        options={pageSizeOptions}
+        className="w-full sm:w-32"
+      />
+    </div>
+
+    <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible py-2 sm:py-0">
+      <button
+        className={`
+          p-2 rounded-md transition-colors shrink-0
+          ${currentPage === 1 
+            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+          }
+        `}
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      
+      <div className="flex items-center gap-2">
+        {Array.from({ length: totalPages }, (_, i) => i + 1)
+          .filter(pageNum => 
+            pageNum === 1 || 
+            pageNum === totalPages || 
+            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+          )
+          .map((pageNum, index, array) => {
+            if (index > 0 && pageNum - array[index - 1] > 1) {
+              return (
+                <span 
+                  key={`ellipsis-${pageNum}`} 
+                  className="px-2 text-gray-500 shrink-0"
+                >
+                  ...
+                </span>
+              );
+            }
+            return (
+              <button
+                key={pageNum}
+                className={`
+                  w-8 h-8 flex items-center justify-center rounded-md text-sm shrink-0
+                  ${currentPage === pageNum
+                    ? 'bg-purple-600 text-white'
+                    : 'text-gray-700 hover:bg-gray-50'
+                  }
+                `}
+                onClick={() => onPageChange(pageNum)}
+              >
+                {pageNum}
+              </button>
+            );
+          })}
+      </div>
+
+      <button
+        className={`
+          p-2 rounded-md transition-colors shrink-0
+          ${currentPage === totalPages 
+            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+          }
+        `}
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+    <div></div>
+  </div>
+)
+
 export default function LeadList({ 
   initialLeads = [],
   isLoading,
@@ -303,166 +398,32 @@ export default function LeadList({
                 </tbody>
               </table>
 
-              {/* Pagination - Now inside the table container */}
-              <div className="px-6 py-4 bg-white border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Select
-                      value={pageSize}
-                      onChange={(value) => onPageSizeChange(Number(value))}
-                      options={pageSizeOptions}
-                      className="w-32"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      className={`
-                        p-2 rounded-md transition-colors
-                        ${currentPage === 1 
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                        }
-                      `}
-                      onClick={() => onPageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(pageNum => 
-                        pageNum === 1 || 
-                        pageNum === totalPages || 
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                      )
-                      .map((pageNum, index, array) => {
-                        if (index > 0 && pageNum - array[index - 1] > 1) {
-                          return (
-                            <span 
-                              key={`ellipsis-${pageNum}`} 
-                              className="px-2 text-gray-500"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-                        return (
-                          <button
-                            key={pageNum}
-                            className={`
-                              w-8 h-8 flex items-center justify-center rounded-md text-sm
-                              ${currentPage === pageNum
-                                ? 'bg-purple-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-50'
-                              }
-                            `}
-                            onClick={() => onPageChange(pageNum)}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-
-                    <button
-                      className={`
-                        p-2 rounded-md transition-colors
-                        ${currentPage === totalPages 
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                        }
-                      `}
-                      onClick={() => onPageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className=""></div>
-                </div>
+              {/* Desktop Pagination - Inside table container */}
+              <div className="px-6 py-4 bg-white border-t border-gray-200 hidden sm:block">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  onPageChange={onPageChange}
+                  onPageSizeChange={onPageSizeChange}
+                  pageSizeOptions={pageSizeOptions}
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Pagination */}
-      <div className="px-4 sm:px-6 py-4 bg-white border-t border-gray-200">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="w-full sm:w-auto">
-            <Select
-              value={pageSize}
-              onChange={(value) => onPageSizeChange(Number(value))}
-              options={pageSizeOptions}
-              className="w-full sm:w-32"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              className={`
-                p-2 rounded-md transition-colors
-                ${currentPage === 1 
-                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }
-              `}
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(pageNum => 
-                pageNum === 1 || 
-                pageNum === totalPages || 
-                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-              )
-              .map((pageNum, index, array) => {
-                if (index > 0 && pageNum - array[index - 1] > 1) {
-                  return (
-                    <span 
-                      key={`ellipsis-${pageNum}`} 
-                      className="px-2 text-gray-500"
-                    >
-                      ...
-                    </span>
-                  );
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    className={`
-                      w-8 h-8 flex items-center justify-center rounded-md text-sm
-                      ${currentPage === pageNum
-                        ? 'bg-purple-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                      }
-                    `}
-                    onClick={() => onPageChange(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-            <button
-              className={`
-                p-2 rounded-md transition-colors
-                ${currentPage === totalPages 
-                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                }
-              `}
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
+      {/* Mobile Pagination - Outside table */}
+      <div className="block sm:hidden px-4 sm:px-6 py-4 bg-white border-t border-gray-200">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          pageSizeOptions={pageSizeOptions}
+        />
       </div>
     </div>
   )
