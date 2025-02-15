@@ -4,8 +4,10 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
+import ExportMenu from './ExportMenu'
+import { format } from 'date-fns'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -92,6 +94,46 @@ export default function LeadList({
     setLeads(initialLeads)
   }, [initialLeads])
 
+  const exportToCSV = (leads: Lead[]) => {
+    // Define headers
+    const headers = [
+      'Name',
+      'Company',
+      'Stage',
+      'Engaged',
+      'Last Contacted',
+      'Email'
+    ];
+
+    // Convert leads to CSV rows
+    const rows = leads.map(lead => [
+      lead.name,
+      lead.company,
+      lead.current_stage,
+      lead.engaged ? 'Yes' : 'No',
+      lead.last_contacted ? format(new Date(lead.last_contacted), 'MMM d, yyyy') : '-',
+      lead.email
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create and trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `leads-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -115,17 +157,10 @@ export default function LeadList({
               onClick={onAddLead}
               className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
-              <span className="mr-1">+</span> Add Lead
+              <Plus className="w-4 h-4 mr-2" />
+              Add Lead
             </button>
-            <button 
-              onClick={onExportAll}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700"
-            >
-              <svg className="w-5 h-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10 3v2M10 15v2M17 10h-2M5 10H3M15 15l-1.5-1.5M15 5l-1.5 1.5M5 15l1.5-1.5M5 5l1.5 1.5"/>
-              </svg>
-              Export All
-            </button>
+            <ExportMenu onExport={() => exportToCSV(leads)} />
           </div>
         </div>
 
