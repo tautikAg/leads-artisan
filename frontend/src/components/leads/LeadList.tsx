@@ -143,7 +143,7 @@ export default function LeadList({
           />
         </form>
 
-        <div className="mt-2 text-sm text-gray-500">
+        <div className="mt-4 text-sm text-gray-500">
           Showing {((currentPage - 1) * pageSize) + 1}-{Math.min(currentPage * pageSize, totalLeads)} of {totalLeads} leads
         </div>
       </div>
