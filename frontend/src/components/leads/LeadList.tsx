@@ -46,20 +46,20 @@ const Pagination = ({
   onPageSizeChange: (size: number) => void
   pageSizeOptions: { label: string; value: number }[]
 }) => (
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-    <div className="w-full sm:w-auto">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center">
       <Select
         value={pageSize}
         onChange={(value) => onPageSizeChange(Number(value))}
         options={pageSizeOptions}
-        className="w-full sm:w-32"
+        className="w-32"
       />
     </div>
 
-    <div className="flex items-center gap-2 overflow-x-auto sm:overflow-visible py-2 sm:py-0">
+    <div className="flex items-center gap-2">
       <button
         className={`
-          p-2 rounded-md transition-colors shrink-0
+          p-2 rounded-md transition-colors
           ${currentPage === 1 
             ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -71,45 +71,43 @@ const Pagination = ({
         <ChevronLeft className="h-4 w-4" />
       </button>
       
-      <div className="flex items-center gap-2">
-        {Array.from({ length: totalPages }, (_, i) => i + 1)
-          .filter(pageNum => 
-            pageNum === 1 || 
-            pageNum === totalPages || 
-            (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-          )
-          .map((pageNum, index, array) => {
-            if (index > 0 && pageNum - array[index - 1] > 1) {
-              return (
-                <span 
-                  key={`ellipsis-${pageNum}`} 
-                  className="px-2 text-gray-500 shrink-0"
-                >
-                  ...
-                </span>
-              );
-            }
+      {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .filter(pageNum => 
+          pageNum === 1 || 
+          pageNum === totalPages || 
+          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+        )
+        .map((pageNum, index, array) => {
+          if (index > 0 && pageNum - array[index - 1] > 1) {
             return (
-              <button
-                key={pageNum}
-                className={`
-                  w-8 h-8 flex items-center justify-center rounded-md text-sm shrink-0
-                  ${currentPage === pageNum
-                    ? 'bg-purple-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-50'
-                  }
-                `}
-                onClick={() => onPageChange(pageNum)}
+              <span 
+                key={`ellipsis-${pageNum}`} 
+                className="px-2 text-gray-500"
               >
-                {pageNum}
-              </button>
+                ...
+              </span>
             );
-          })}
-      </div>
+          }
+          return (
+            <button
+              key={pageNum}
+              className={`
+                w-8 h-8 flex items-center justify-center rounded-md text-sm
+                ${currentPage === pageNum
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              onClick={() => onPageChange(pageNum)}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
 
       <button
         className={`
-          p-2 rounded-md transition-colors shrink-0
+          p-2 rounded-md transition-colors
           ${currentPage === totalPages 
             ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
@@ -121,7 +119,9 @@ const Pagination = ({
         <ChevronRight className="h-4 w-4" />
       </button>
     </div>
-    <div></div>
+
+    {/* dont show this div when in mobile view */}
+    <div className="hidden sm:block"></div>
   </div>
 )
 
@@ -283,59 +283,52 @@ export default function LeadList({
       {/* Mobile List View */}
       <div className="block sm:hidden mt-4">
         {Array.isArray(leads) && leads.length > 0 ? (
-          <div className="space-y-3 px-4">
+          <div className="space-y-2 px-4">
             {leads.map((lead) => (
               <div 
                 key={lead.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
-                onClick={() => {/* Handle lead click */}}
+                className="bg-white rounded-lg border border-gray-200"
               >
-                <div className="flex items-center justify-between">
+                {/* Lead Header */}
+                <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 flex-shrink-0 rounded-full bg-purple-100 flex items-center justify-center">
+                    <div className="h-8 w-8 flex-shrink-0 rounded-full bg-purple-100 flex items-center justify-center">
                       <span className="text-sm font-medium text-purple-600">
                         {lead.name.split(' ').map(part => part[0]).join('').toUpperCase()}
                       </span>
                     </div>
                     <div>
                       <div className="text-sm font-medium text-gray-900">{lead.name}</div>
-                      <div className="text-sm text-gray-500">{lead.email}</div>
+                      <div className="text-sm text-gray-500">{lead.company}</div>
                     </div>
                   </div>
-                  {/* Mobile menu */}
                   <button className="p-2 hover:bg-gray-50 rounded-full">
                     <MoreHorizontal className="h-5 w-5 text-gray-400" />
                   </button>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Company</span>
-                    <span className="text-sm font-medium">{lead.company}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Stage</span>
+                {/* Stage and Status */}
+                <div className="px-4 py-2 flex items-center gap-3">
+                  <div className="flex-1">
                     <StageProgress currentStage={lead.current_stage} />
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Status</span>
-                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-                      lead.engaged
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {lead.status}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-500">Last Contacted</span>
-                    <span className="text-sm">
-                      {lead.last_contacted 
-                        ? format(new Date(lead.last_contacted), 'd MMM, yyyy')
-                        : '-'
-                      }
-                    </span>
-                  </div>
+                  <span className={`
+                    inline-flex rounded-full px-2 text-xs font-medium leading-5
+                    ${lead.engaged ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
+                  `}>
+                    {lead.status}
+                  </span>
+                </div>
+
+                {/* View Details Button */}
+                <div className="px-4 py-3 border-t border-gray-100">
+                  <button 
+                    onClick={() => {/* Handle view details */}}
+                    className="text-sm text-purple-600 font-medium flex items-center"
+                  >
+                    View Details
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -415,7 +408,7 @@ export default function LeadList({
       </div>
 
       {/* Mobile Pagination - Outside table */}
-      <div className="block sm:hidden px-4 sm:px-6 py-4 bg-white border-t border-gray-200">
+      <div className="block sm:hidden px-4 sm:px-6 py-4 ">
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
