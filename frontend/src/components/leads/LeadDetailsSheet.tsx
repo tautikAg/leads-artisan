@@ -218,12 +218,6 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                 <SheetTitle className="text-xl font-semibold">{lead.name}</SheetTitle>
                 <div className="text-sm text-gray-500">{lead.email}</div>
               </div>
-              <button
-                onClick={() => setShowEditModal(true)}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <Edit2 className="h-5 w-5 text-gray-500" />
-              </button>
             </div>
           </SheetHeader>
           
