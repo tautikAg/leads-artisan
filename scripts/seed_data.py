@@ -9,6 +9,7 @@ SAMPLE_LEADS = [
         "company": "Flux Technologies Ltd.",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "Initial Contact",
         "last_contacted": datetime.now()
     },
     {
@@ -17,6 +18,7 @@ SAMPLE_LEADS = [
         "company": "Prism Tech Pvt. Ltd.",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "New Lead",
         "last_contacted": datetime.now()
     },
     {
@@ -25,6 +27,7 @@ SAMPLE_LEADS = [
         "company": "Apex Technologies",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "Meeting Scheduled",
         "last_contacted": datetime.now() - timedelta(days=5)
     },
     {
@@ -33,6 +36,7 @@ SAMPLE_LEADS = [
         "company": "Cube",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "Initial Contact",
         "last_contacted": datetime.now() - timedelta(days=5)
     },
     {
@@ -41,6 +45,7 @@ SAMPLE_LEADS = [
         "company": "Nova Corporation",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "Proposal Sent",
         "last_contacted": datetime.now() - timedelta(days=7)
     },
     {
@@ -49,6 +54,7 @@ SAMPLE_LEADS = [
         "company": "Echo",
         "status": "Engaged",
         "engaged": True,
+        "current_stage": "Negotiation",
         "last_contacted": datetime.now() - timedelta(days=7)
     },
     {
@@ -57,6 +63,7 @@ SAMPLE_LEADS = [
         "company": "Wave Technologies",
         "status": "Not Engaged",
         "engaged": False,
+        "current_stage": "New Lead",
         "last_contacted": datetime.now() - timedelta(days=10)
     },
     {
@@ -65,6 +72,7 @@ SAMPLE_LEADS = [
         "company": "Peak Systems",
         "status": "Engaged",
         "engaged": True,
+        "current_stage": "Closed Won",
         "last_contacted": datetime.now() - timedelta(days=10)
     },
     {
@@ -73,6 +81,7 @@ SAMPLE_LEADS = [
         "company": "Drift Analytics",
         "status": "Engaged",
         "engaged": True,
+        "current_stage": "Proposal Sent",
         "last_contacted": datetime.now() - timedelta(days=10)
     },
     {
@@ -81,30 +90,54 @@ SAMPLE_LEADS = [
         "company": "Core Innovations",
         "status": "Engaged",
         "engaged": True,
+        "current_stage": "Meeting Scheduled",
         "last_contacted": datetime.now() - timedelta(days=10)
     }
 ]
 
-def seed_data():
-    """Seed the database with sample data."""
-    crud_lead = lead  # Get the CRUD instance
-    
+async def seed_data():
+    """Seed the database with sample leads including stage information."""
     for lead_data in SAMPLE_LEADS:
         # Check if lead already exists
-        existing_lead = crud_lead.get_by_email(email=lead_data["email"])
+        existing_lead = await lead.get_by_email(email=lead_data["email"])
         if not existing_lead:
+            # Create stage history for more realistic data
+            current_stage = lead_data["current_stage"]
+            stages = ["New Lead", "Initial Contact", "Meeting Scheduled", 
+                     "Proposal Sent", "Negotiation", "Closed Won"]
+            current_index = stages.index(current_stage)
+            
+            # Generate stage history up to current stage
+            stage_history = []
+            base_time = datetime.now() - timedelta(days=30)  # Start from 30 days ago
+            
+            for i in range(current_index + 1):
+                stage_change = {
+                    "from_stage": stages[i-1] if i > 0 else None,
+                    "to_stage": stages[i],
+                    "changed_at": base_time + timedelta(days=i*3),  # 3 days between stages
+                    "notes": f"Moved to {stages[i]}"
+                }
+                stage_history.append(stage_change)
+            
+            # Add stage history to lead data
+            lead_data["stage_history"] = stage_history
+            lead_data["stage_updated_at"] = stage_history[-1]["changed_at"] if stage_history else datetime.now()
+            
+            # Create the lead
             lead_in = LeadCreate(**lead_data)
-            crud_lead.create(obj_in=lead_in)
+            await lead.create(lead_in)
     
     print(f"Successfully seeded {len(SAMPLE_LEADS)} leads")
 
-def main():
+async def main():
     """Main function to run the seeding process."""
     try:
-        seed_data()
+        await seed_data()
     except Exception as e:
         print(f"Error seeding data: {e}")
         raise
 
 if __name__ == "__main__":
-    main() 
+    import asyncio
+    asyncio.run(main()) 
