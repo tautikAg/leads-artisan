@@ -1,6 +1,17 @@
 from datetime import datetime
-from typing import Optional, List, Generic, TypeVar
+from typing import Optional, List, Generic, TypeVar, Literal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+
+# Define possible stages as Literal type
+LeadStage = Literal[
+    "New Lead",
+    "Initial Contact",
+    "Meeting Scheduled",
+    "Proposal Sent",
+    "Negotiation",
+    "Closed Won",
+    "Closed Lost"
+]
 
 class LeadBase(BaseModel):
     """
@@ -32,6 +43,18 @@ class LeadBase(BaseModel):
         default=False,
         description="Whether the lead is currently engaged"
     )
+    current_stage: LeadStage = Field(
+        default="New Lead",
+        description="Current stage of the lead in the pipeline"
+    )
+    stage_updated_at: Optional[datetime] = Field(
+        default=None,
+        description="When the current stage was last updated"
+    )
+    stage_history: List[dict] = Field(
+        default_factory=list,
+        description="History of stage changes with timestamps"
+    )
     last_contacted: Optional[datetime] = None
 
 class Lead(LeadBase):
@@ -42,6 +65,20 @@ class Lead(LeadBase):
     id: str = Field(description="MongoDB ObjectId as string")
     created_at: datetime
     updated_at: datetime
+    
+    # Add computed property for stage progress
+    @property
+    def stage_progress(self) -> dict:
+        stages = ["New Lead", "Initial Contact", "Meeting Scheduled", 
+                 "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"]
+        current_index = stages.index(self.current_stage)
+        total_stages = len(stages) - 1  # Exclude Closed Lost from progress
+        return {
+            "current_stage": self.current_stage,
+            "current_index": current_index,
+            "total_stages": total_stages,
+            "progress_percentage": (current_index / total_stages) * 100 if current_index < total_stages else 100
+        }
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -62,7 +99,17 @@ class LeadUpdate(BaseModel):
     company: Optional[str] = Field(None, min_length=1, max_length=100)
     status: Optional[str] = Field(None, max_length=50)
     engaged: Optional[bool] = None
+    current_stage: Optional[LeadStage] = None
     last_contacted: Optional[datetime] = None
+
+class StageChange(BaseModel):
+    """
+    Model for recording stage changes
+    """
+    from_stage: LeadStage
+    to_stage: LeadStage
+    changed_at: datetime = Field(default_factory=datetime.utcnow)
+    notes: Optional[str] = None
 
 # Add this new model for paginated response
 T = TypeVar('T')

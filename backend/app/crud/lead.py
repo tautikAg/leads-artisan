@@ -1,7 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from bson import ObjectId
-from app.models.lead import Lead, LeadCreate, LeadUpdate
+from app.models.lead import Lead, LeadCreate, LeadUpdate, StageChange
 from app.db.database import get_database
 
 class CRUDLead:
@@ -65,35 +65,49 @@ class CRUDLead:
 
         return [Lead(**self._convert_id(lead)) for lead in leads_data]
 
-    def create(self, obj_in: LeadCreate) -> Lead:
+    async def create(self, lead: LeadCreate) -> Lead:
         """Create a new lead"""
-        lead_dict = obj_in.dict()
-        lead_dict["created_at"] = datetime.utcnow()
-        lead_dict["updated_at"] = lead_dict["created_at"]
+        lead_dict = lead.model_dump()
+        lead_dict.update({
+            "created_at": datetime.utcnow(),
+            "updated_at": datetime.utcnow(),
+            "stage_updated_at": datetime.utcnow(),
+            "stage_history": [{
+                "from_stage": None,
+                "to_stage": lead.current_stage,
+                "changed_at": datetime.utcnow()
+            }]
+        })
         
-        # Simple insert
-        result = self.collection.insert_one(lead_dict)
-        lead_dict["id"] = str(result.inserted_id)
-        
-        return Lead(**lead_dict)
+        result = await self.collection.insert_one(lead_dict)
+        return await self.get(str(result.inserted_id))
 
-    def update(self, lead_id: str, obj_in: LeadUpdate) -> Optional[Lead]:
+    async def update(self, id: str, lead_update: LeadUpdate) -> Optional[Lead]:
         """Update an existing lead"""
-        update_data = {
-            k: v for k, v in obj_in.dict(exclude_unset=True).items()
-            if v is not None
-        }
-        update_data["updated_at"] = datetime.utcnow()
+        update_dict = lead_update.model_dump(exclude_unset=True)
+        
+        # Handle stage change
+        if "current_stage" in update_dict:
+            current_lead = await self.get(id)
+            if current_lead and current_lead.current_stage != update_dict["current_stage"]:
+                stage_change = {
+                    "from_stage": current_lead.current_stage,
+                    "to_stage": update_dict["current_stage"],
+                    "changed_at": datetime.utcnow()
+                }
+                update_dict["stage_updated_at"] = datetime.utcnow()
+                update_dict["stage_history"] = current_lead.stage_history + [stage_change]
 
-        # Simple update
-        lead_data = self.collection.find_one_and_update(
-            {"_id": ObjectId(lead_id)},
-            {"$set": update_data},
+        update_dict["updated_at"] = datetime.utcnow()
+        
+        result = await self.collection.find_one_and_update(
+            {"_id": ObjectId(id)},
+            {"$set": update_dict},
             return_document=True
         )
         
-        if lead_data:
-            return Lead(**self._convert_id(lead_data))
+        if result:
+            return Lead.model_validate(result)
         return None
 
     def delete(self, lead_id: str) -> Optional[Lead]:
