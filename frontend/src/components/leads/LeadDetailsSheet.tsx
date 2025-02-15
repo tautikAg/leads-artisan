@@ -18,6 +18,15 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
 
   if (!lead) return null
 
+  const formatDate = (date: string | null) => {
+    if (!date) return "N/A"
+    try {
+      return format(new Date(date), 'MMM d, yyyy')
+    } catch {
+      return "N/A"
+    }
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
@@ -37,7 +46,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
             <div className="mt-2 flow-root">
               <ul className="-mb-8">
                 {lead.stage_history.map((stage, stageIdx) => (
-                  <li key={stage.changed_at}>
+                  <li key={`${stage.to_stage}-${stageIdx}`}>
                     <div className="relative pb-8">
                       {stageIdx !== lead.stage_history.length - 1 ? (
                         <span
@@ -47,8 +56,14 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                       ) : null}
                       <div className="relative flex space-x-3">
                         <div>
-                          <span className="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center ring-8 ring-white">
-                            <div className="h-2.5 w-2.5 rounded-full bg-purple-600" />
+                          <span className={`
+                            h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
+                            ${stage.changed_at ? 'bg-purple-100' : 'bg-gray-100'}
+                          `}>
+                            <div className={`
+                              h-2.5 w-2.5 rounded-full 
+                              ${stage.changed_at ? 'bg-purple-600' : 'bg-gray-400'}
+                            `} />
                           </span>
                         </div>
                         <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
@@ -59,9 +74,14 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                                 `Started as ${stage.to_stage}`
                               }
                             </p>
+                            {stage.notes && (
+                              <p className="mt-0.5 text-xs text-gray-400">
+                                {stage.notes}
+                              </p>
+                            )}
                           </div>
                           <div className="whitespace-nowrap text-right text-sm text-gray-500">
-                            {format(new Date(stage.changed_at), 'MMM d, yyyy')}
+                            {formatDate(stage.changed_at)}
                           </div>
                         </div>
                       </div>
@@ -84,13 +104,13 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
               <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                 <dt className="text-sm font-medium text-gray-500">Last Contacted</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                  {format(new Date(lead.last_contacted), 'MMM d, yyyy')}
+                  {formatDate(lead.last_contacted)}
                 </dd>
               </div>
               <div className="px-4 py-2 sm:grid sm:grid-cols-3 sm:gap-4">
                 <dt className="text-sm font-medium text-gray-500">Created</dt>
                 <dd className="mt-1 text-sm text-gray-900 sm:col-span-2 sm:mt-0">
-                  {format(new Date(lead.created_at), 'MMM d, yyyy')}
+                  {formatDate(lead.created_at)}
                 </dd>
               </div>
             </dl>
