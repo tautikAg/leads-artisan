@@ -1,5 +1,5 @@
-import { Download } from 'lucide-react'
 import { useState } from 'react'
+import downloadIcon from '../../assets/downloadIcon.svg'
 
 interface ExportMenuProps {
   onExport: () => void
@@ -27,8 +27,12 @@ export default function ExportMenu({ onExport }: ExportMenuProps) {
         disabled:cursor-not-allowed transition-all
       `}
     >
-      <Download className={`w-4 h-4 mr-2 ${isExporting ? 'animate-bounce' : ''}`} />
-      {isExporting ? 'Exporting...' : 'Export'}
+      <img 
+        src={downloadIcon} 
+        alt="download" 
+        className={`w-5 h-5 mr-2 ${isExporting ? 'animate-bounce' : ''}`}
+      />
+      {isExporting ? 'Exporting...' : 'Export All'}
     </button>
   )
 } 
