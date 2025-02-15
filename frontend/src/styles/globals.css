@@ -1,0 +1,28 @@
+/* Add these styles for better select dropdown appearance */
+select {
+  background-color: white;
+}
+
+select option {
+  padding: 8px 12px;
+  background-color: white;
+  color: #111827;
+}
+
+select option:hover,
+select option:focus {
+  background-color: #F3F4F6;
+}
+
+/* For dark mode dropdown */
+@media (prefers-color-scheme: dark) {
+  select option {
+    background-color: #1F2937;
+    color: white;
+  }
+  
+  select option:hover,
+  select option:focus {
+    background-color: #374151;
+  }
+} 

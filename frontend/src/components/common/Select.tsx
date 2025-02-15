@@ -29,25 +29,24 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className={`
               appearance-none
               w-full
-              px-3.5
-              py-2.5
-              pr-10
+              px-3
+              py-1.5
+              pr-8
               text-sm
               bg-white
               border
-              border-gray-300
-              rounded-lg
-              shadow-sm
+              border-gray-200
+              rounded-md
               cursor-pointer
               focus:outline-none
-              focus:ring-2
-              focus:ring-purple-500/20
+              focus:ring-1
+              focus:ring-purple-500
               focus:border-purple-500
-              transition-all
-              hover:border-gray-400
+              transition-colors
+              hover:bg-gray-50
               disabled:opacity-50
               disabled:cursor-not-allowed
-              ${error ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : ''}
+              ${error ? 'border-red-500 focus:ring-red-500 focus:border-red-500' : ''}
               ${className}
             `}
             {...props}
@@ -56,15 +55,15 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
               <option 
                 key={option.value} 
                 value={option.value}
-                className="py-2"
+                className="py-2 px-3 text-gray-900 hover:bg-gray-100"
               >
                 {option.label}
               </option>
             ))}
           </select>
-          <ChevronDown 
-            className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 pointer-events-none" 
-          />
+          <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </div>
         </div>
         {error && (
           <p className="mt-1 text-sm text-red-500">{error}</p>

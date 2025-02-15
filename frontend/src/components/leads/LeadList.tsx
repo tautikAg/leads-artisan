@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -65,14 +66,10 @@ export default function LeadList({
   }
 
   const pageSizeOptions = [
-    { label: '10', value: 10 },
-    { label: '20', value: 20 },
-    { label: '50', value: 50 }
+    { label: '10 per page', value: 10 },
+    { label: '20 per page', value: 20 },
+    { label: '50 per page', value: 50 }
   ]
-
-  const handleLeadDelete = (id: string) => {
-    // Implement the delete logic
-  }
 
   const handleLeadUpdate = (updatedLead: Lead) => {
     setLeads(prevLeads => 
@@ -198,25 +195,28 @@ export default function LeadList({
               {/* Pagination - Now inside the table container */}
               <div className="px-6 py-4 bg-white border-t border-gray-200">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center">
                     <Select
                       value={pageSize}
                       onChange={(value) => onPageSizeChange(Number(value))}
                       options={pageSizeOptions}
-                      className="w-[120px]"
+                      className="w-32"
                     />
-                    <span className="text-sm text-gray-500">per page</span>
                   </div>
 
                   <div className="flex items-center gap-2">
                     <button
-                      className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`
+                        p-2 rounded-md transition-colors
+                        ${currentPage === 1 
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        }
+                      `}
                       onClick={() => onPageChange(currentPage - 1)}
                       disabled={currentPage === 1}
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <ChevronLeft className="h-4 w-4" />
                     </button>
                     
                     {Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -254,13 +254,17 @@ export default function LeadList({
                       })}
 
                     <button
-                      className="p-2 text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={`
+                        p-2 rounded-md transition-colors
+                        ${currentPage === totalPages 
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        }
+                      `}
                       onClick={() => onPageChange(currentPage + 1)}
                       disabled={currentPage === totalPages}
                     >
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
 
