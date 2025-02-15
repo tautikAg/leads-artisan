@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/leads';
 import { LeadCreate, LeadUpdate, LeadFilters, Lead } from '../types/lead';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 interface UpdateLeadParams {
   id: string;
@@ -21,10 +21,16 @@ interface UseLeadsReturn {
   deleteLead: (id: string) => void;
   exportLeads: () => void;
   isUpdating: boolean;
+  sort: { field: string; direction: 'asc' | 'desc' };
+  onSort: (field: string, direction: 'asc' | 'desc') => void;
 }
 
 export function useLeads(filters: LeadFilters): UseLeadsReturn {
   const queryClient = useQueryClient();
+  const [sort, setSort] = useState<{ field: string; direction: 'asc' | 'desc' }>({
+    field: 'created_at',
+    direction: 'desc'
+  });
 
   const query = useQuery({
     queryKey: ['leads', filters],
@@ -80,6 +86,12 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     }
   };
 
+  const handleSort = (field: string, direction: 'asc' | 'desc') => {
+    setSort({ field, direction });
+    // Reset to first page when sorting changes
+    setCurrentPage(1);
+  };
+
   return {
     leads: query.data?.items ?? [],
     totalLeads: query.data?.total ?? 0,
@@ -92,6 +104,8 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     updateLead: updateMutation.mutate,
     deleteLead: deleteMutation.mutate,
     exportLeads,
-    isUpdating: updateMutation.isPending
+    isUpdating: updateMutation.isPending,
+    sort,
+    onSort: handleSort,
   };
 }

@@ -26,7 +26,12 @@ const LeadsPage: React.FC = () => {
     error, 
     createLead,
     deleteLead,
-    exportLeads 
+    exportLeads,
+    onPageChange,
+    onPageSizeChange,
+    onSearch,
+    onSort,
+    sort
   } = useLeads(filters)
 
   const handleSearch = useCallback((searchTerm: string) => {
@@ -74,12 +79,14 @@ const LeadsPage: React.FC = () => {
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={totalPages}
-          onPageChange={handlePageChange}
-          onPageSizeChange={handlePageSizeChange}
-          onSearch={handleSearch}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          onSearch={onSearch}
           onAddLead={() => setIsAddModalOpen(true)}
           onExportAll={exportLeads}
           onDeleteLead={handleDeleteLead}
+          onSort={onSort}
+          currentSort={sort}
         />
       )}
 
