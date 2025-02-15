@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -69,10 +70,6 @@ export default function LeadList({
     { label: '20 per page', value: 20 },
     { label: '50 per page', value: 50 }
   ]
-
-  const handleLeadDelete = (id: string) => {
-    // Implement the delete logic
-  }
 
   const handleLeadUpdate = (updatedLead: Lead) => {
     setLeads(prevLeads => 
@@ -194,70 +191,88 @@ export default function LeadList({
                   )}
                 </tbody>
               </table>
+
+              {/* Pagination - Now inside the table container */}
+              <div className="px-6 py-4 bg-white border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Select
+                      value={pageSize}
+                      onChange={(value) => onPageSizeChange(Number(value))}
+                      options={pageSizeOptions}
+                      className="w-32"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      className={`
+                        p-2 rounded-md transition-colors
+                        ${currentPage === 1 
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        }
+                      `}
+                      onClick={() => onPageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(pageNum => 
+                        pageNum === 1 || 
+                        pageNum === totalPages || 
+                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+                      )
+                      .map((pageNum, index, array) => {
+                        if (index > 0 && pageNum - array[index - 1] > 1) {
+                          return (
+                            <span 
+                              key={`ellipsis-${pageNum}`} 
+                              className="px-2 text-gray-500"
+                            >
+                              ...
+                            </span>
+                          );
+                        }
+                        return (
+                          <button
+                            key={pageNum}
+                            className={`
+                              w-8 h-8 flex items-center justify-center rounded-md text-sm
+                              ${currentPage === pageNum
+                                ? 'bg-purple-600 text-white'
+                                : 'text-gray-700 hover:bg-gray-50'
+                              }
+                            `}
+                            onClick={() => onPageChange(pageNum)}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                    <button
+                      className={`
+                        p-2 rounded-md transition-colors
+                        ${currentPage === totalPages 
+                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                        }
+                      `}
+                      onClick={() => onPageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <div className=""></div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Pagination Section */}
-      <div className="px-6 py-4 border-t border-gray-200">
-        <div className="grid grid-cols-3 items-center">
-          <div className="justify-self-start">
-            <Select
-              value={pageSize}
-              onChange={(value) => onPageSizeChange(Number(value))}
-              options={pageSizeOptions}
-            />
-          </div>
-
-          <div className="flex items-center justify-center gap-2">
-            <button
-              className="p-2"
-              onClick={() => onPageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M10 12L6 8L10 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-            
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(pageNum => 
-                pageNum === 1 || 
-                pageNum === totalPages || 
-                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-              )
-              .map((pageNum, index, array) => {
-                if (index > 0 && pageNum - array[index - 1] > 1) {
-                  return <span key={`ellipsis-${pageNum}`} className="px-2">...</span>;
-                }
-                return (
-                  <button
-                    key={pageNum}
-                    className={`w-8 h-8 flex items-center justify-center rounded-md text-sm ${
-                      currentPage === pageNum
-                        ? 'bg-purple-600 text-white'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                    onClick={() => onPageChange(pageNum)}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              })}
-
-            <button
-              className="p-2"
-              onClick={() => onPageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6 12L10 8L6 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </button>
-          </div>
-
-          <div></div>
         </div>
       </div>
     </div>
