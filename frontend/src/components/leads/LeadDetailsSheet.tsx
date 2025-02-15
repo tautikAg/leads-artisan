@@ -211,7 +211,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
   return (
     <>
       <Sheet open={isOpen} onOpenChange={onClose}>
-        <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+        <SheetContent className={`fixed right-0 top-0 h-full w-full sm:w-[540px] bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out`}>
           <SheetHeader>
             <div className="flex justify-between items-start">
               <div>
@@ -221,7 +221,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
             </div>
           </SheetHeader>
           
-          <div className="px-6 py-4">
+          <div className="px-4 sm:px-6 py-4">
             {/* Quick Actions */}
             <div className="mb-6 flex gap-3">
               <button className="flex-1 flex items-center justify-center gap-2 p-2 rounded-lg border border-gray-200 hover:bg-gray-50">

@@ -27,7 +27,7 @@ export default function FilterSortDropdown({
 }: FilterSortDropdownProps) {
   return (
     <Menu as="div" className="relative z-10">
-      <Menu.Button className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all h-10 whitespace-nowrap">
+      <Menu.Button className="inline-flex items-center px-3 sm:px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition-all h-9 sm:h-10 whitespace-nowrap w-full sm:w-auto justify-center sm:justify-start">
         <ListFilter className="w-4 h-4 mr-2" />
         Filter & Sort
       </Menu.Button>
@@ -41,7 +41,7 @@ export default function FilterSortDropdown({
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 mt-1 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none py-1">
+        <Menu.Items className="absolute right-0 mt-1 w-full sm:w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black/5 focus:outline-none py-1">
           <div className="px-3 py-2 text-xs font-medium text-gray-500 uppercase">
             Sort by
           </div>

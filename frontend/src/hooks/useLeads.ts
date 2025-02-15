@@ -36,7 +36,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     queryKey: ['leads', filters],
     queryFn: () => leadsApi.getLeads(filters),
     staleTime: 1000 * 60,
-    keepPreviousData: true,
     placeholderData: (previousData) => previousData,
     refetchOnWindowFocus: false,
     retry: false,

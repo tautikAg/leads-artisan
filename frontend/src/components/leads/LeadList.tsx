@@ -4,10 +4,11 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
+import StageProgress from './StageProgress'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -147,15 +148,15 @@ export default function LeadList({
   }
 
   return (
-    <div>
+    <div className="w-full">
       {/* Header Section */}
-      <div className="">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900">Leads</h1>
+      <div className="px-4 sm:px-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Leads</h1>
           <div className="flex gap-3">
             <button 
               onClick={onAddLead}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="flex-1 sm:flex-none inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Lead
@@ -164,12 +165,13 @@ export default function LeadList({
           </div>
         </div>
 
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <SearchInput
             ref={searchInputRef}
-            placeholder="Search by lead's name, email or company name"
+            placeholder="Search leads..."
             value={searchTerm}
             onChange={handleSearchChange}
+            className="w-full"
           />
           
           <FilterSortDropdown 
@@ -183,8 +185,75 @@ export default function LeadList({
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="">
+      {/* Mobile List View */}
+      <div className="block sm:hidden mt-4">
+        {Array.isArray(leads) && leads.length > 0 ? (
+          <div className="space-y-3 px-4">
+            {leads.map((lead) => (
+              <div 
+                key={lead.id}
+                className="bg-white rounded-lg border border-gray-200 p-4 space-y-3"
+                onClick={() => {/* Handle lead click */}}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 flex-shrink-0 rounded-full bg-purple-100 flex items-center justify-center">
+                      <span className="text-sm font-medium text-purple-600">
+                        {lead.name.split(' ').map(part => part[0]).join('').toUpperCase()}
+                      </span>
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">{lead.name}</div>
+                      <div className="text-sm text-gray-500">{lead.email}</div>
+                    </div>
+                  </div>
+                  {/* Mobile menu */}
+                  <button className="p-2 hover:bg-gray-50 rounded-full">
+                    <MoreHorizontal className="h-5 w-5 text-gray-400" />
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Company</span>
+                    <span className="text-sm font-medium">{lead.company}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Stage</span>
+                    <StageProgress currentStage={lead.current_stage} />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Status</span>
+                    <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
+                      lead.engaged
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {lead.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Last Contacted</span>
+                    <span className="text-sm">
+                      {lead.last_contacted 
+                        ? format(new Date(lead.last_contacted), 'd MMM, yyyy')
+                        : '-'
+                      }
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center text-gray-500">
+            {isLoading ? 'Loading...' : 'No leads found'}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden sm:block">
         <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -314,6 +383,84 @@ export default function LeadList({
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="px-4 sm:px-6 py-4 bg-white border-t border-gray-200">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="w-full sm:w-auto">
+            <Select
+              value={pageSize}
+              onChange={(value) => onPageSizeChange(Number(value))}
+              options={pageSizeOptions}
+              className="w-full sm:w-32"
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              className={`
+                p-2 rounded-md transition-colors
+                ${currentPage === 1 
+                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }
+              `}
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(pageNum => 
+                pageNum === 1 || 
+                pageNum === totalPages || 
+                (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+              )
+              .map((pageNum, index, array) => {
+                if (index > 0 && pageNum - array[index - 1] > 1) {
+                  return (
+                    <span 
+                      key={`ellipsis-${pageNum}`} 
+                      className="px-2 text-gray-500"
+                    >
+                      ...
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    className={`
+                      w-8 h-8 flex items-center justify-center rounded-md text-sm
+                      ${currentPage === pageNum
+                        ? 'bg-purple-600 text-white'
+                        : 'text-gray-700 hover:bg-gray-50'
+                      }
+                    `}
+                    onClick={() => onPageChange(pageNum)}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+
+            <button
+              className={`
+                p-2 rounded-md transition-colors
+                ${currentPage === totalPages 
+                  ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+                  : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+                }
+              `}
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </div>

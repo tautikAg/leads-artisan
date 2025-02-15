@@ -121,7 +121,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
         <div className="fixed inset-0 bg-black/30" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+        <div className="relative bg-white rounded-xl shadow-xl w-[95%] sm:w-full sm:max-w-md overflow-hidden mx-4 sm:mx-0">
           {/* Header */}
           <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
@@ -207,8 +207,8 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Current Stage
                 </label>
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <div className="relative px-6">
+                <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
+                  <div className="relative px-2 sm:px-6">
                     <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200">
                       <div 
                         className="absolute top-0 left-0 h-full bg-purple-600 transition-all"
@@ -244,7 +244,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                   Engagement Status
                 </label>
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex gap-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       type="button"
                       onClick={() => setEngaged(false)}
