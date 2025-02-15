@@ -1,21 +1,26 @@
 import { format } from 'date-fns'
-import { Lead } from '../../types/lead'
+import { Lead, LeadUpdate } from '../../types/lead'
 import { MoreHorizontal, Trash2, Edit2 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import ConfirmDialog from '../common/ConfirmDialog'
 import StageProgress from './StageProgress'
 import LeadDetailsSheet from './LeadDetailsSheet'
+import EditLeadModal from './EditLeadModal'
+import { useLeads } from '../../hooks/useLeads'
 
 interface LeadItemProps {
   lead: Lead
   onDelete: (id: string) => void
+  onUpdate?: (lead: Lead) => void
 }
 
-export default function LeadItem({ lead, onDelete }: LeadItemProps) {
+export default function LeadItem({ lead, onDelete, onUpdate }: LeadItemProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const { updateLead } = useLeads({ page: 1 })
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -52,6 +57,16 @@ export default function LeadItem({ lead, onDelete }: LeadItemProps) {
     if (status === 'Engaged' && engaged) return 4;
     if (status === 'Not Engaged' && !engaged) return 2;
     return 1;
+  }
+
+  const handleEditSubmit = async (id: string, data: LeadUpdate) => {
+    try {
+      updateLead({ id, data })  // Just pass a single object with id and data
+      setShowEditModal(false)
+      // Note: The UI will update automatically through React Query's cache invalidation
+    } catch (error) {
+      console.error('Failed to update lead:', error)
+    }
   }
 
   return (
@@ -116,8 +131,8 @@ export default function LeadItem({ lead, onDelete }: LeadItemProps) {
               <div className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <button
                   onClick={(e) => {
-                    e.stopPropagation() // Prevent row click
-                    // Add your edit functionality here
+                    e.stopPropagation()
+                    setShowEditModal(true)
                     setShowMenu(false)
                   }}
                   className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -153,6 +168,13 @@ export default function LeadItem({ lead, onDelete }: LeadItemProps) {
         description="Are you sure you want to delete this lead? This action cannot be undone."
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      <EditLeadModal
+        lead={lead}
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSubmit={handleEditSubmit}
       />
 
       <LeadDetailsSheet 

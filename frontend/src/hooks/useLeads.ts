@@ -3,6 +3,11 @@ import { leadsApi } from '../api/leads';
 import { LeadCreate, LeadUpdate, LeadFilters, Lead } from '../types/lead';
 import { useCallback, useEffect } from 'react';
 
+interface UpdateLeadParams {
+  id: string;
+  data: LeadUpdate;
+}
+
 interface UseLeadsReturn {
   leads: Lead[];
   totalLeads: number;
@@ -12,9 +17,10 @@ interface UseLeadsReturn {
   isLoading: boolean;
   error: Error | null;
   createLead: (data: LeadCreate) => void;
-  updateLead: (data: { id: string; lead: LeadUpdate }) => void;
+  updateLead: (params: UpdateLeadParams) => void;
   deleteLead: (id: string) => void;
   exportLeads: () => void;
+  isUpdating: boolean;
 }
 
 export function useLeads(filters: LeadFilters): UseLeadsReturn {
@@ -52,12 +58,11 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     },
   });
 
-  const updateMutation = useMutation({
-    mutationFn: ({ id, lead }: { id: string; lead: LeadUpdate }) =>
-      leadsApi.updateLead(id, lead),
+  const updateMutation = useMutation<Lead, Error, UpdateLeadParams>({
+    mutationFn: ({ id, data }) => leadsApi.updateLead(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-    },
+    }
   });
 
   const deleteMutation = useMutation({
@@ -87,5 +92,6 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     updateLead: updateMutation.mutate,
     deleteLead: deleteMutation.mutate,
     exportLeads,
+    isUpdating: updateMutation.isPending
   };
 }

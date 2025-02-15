@@ -40,11 +40,12 @@ export interface LeadCreate {
 }
 
 export interface LeadUpdate {
-  name?: string;
-  email?: string;
-  company?: string;
-  status?: string;
-  engaged?: boolean;
+  name: string
+  email: string
+  company: string
+  current_stage: LeadStage
+  engaged: boolean
+  last_contacted: string
 }
 
 export interface LeadFilters {

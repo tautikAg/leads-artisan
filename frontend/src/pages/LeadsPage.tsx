@@ -1,11 +1,12 @@
-import { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { useLeads } from '../hooks/useLeads'
-import { LeadFilters } from '../types/lead'
+import { LeadFilters, Lead } from '../types/lead'
 import LeadList from '../components/leads/LeadList'
 import AddLeadModal from '../components/leads/AddLeadModal'
 import { showToast } from '../utils/toast'
+import { leadsApi } from '../api/leads'
 
-export default function LeadsPage() {
+const LeadsPage: React.FC = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [filters, setFilters] = useState<LeadFilters>({
     page: 1,
@@ -67,7 +68,7 @@ export default function LeadsPage() {
         <div className="text-red-500">Error loading leads</div>
       ) : (
         <LeadList 
-          leads={leads}
+          initialLeads={leads}
           isLoading={isLoading}
           totalLeads={totalLeads}
           currentPage={currentPage}
@@ -89,4 +90,6 @@ export default function LeadsPage() {
       />
     </div>
   )
-} 
+}
+
+export default LeadsPage 
