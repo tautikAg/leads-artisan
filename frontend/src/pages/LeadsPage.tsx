@@ -3,6 +3,7 @@ import { useLeads } from '../hooks/useLeads'
 import { LeadFilters } from '../types/lead'
 import LeadList from '../components/leads/LeadList'
 import AddLeadModal from '../components/leads/AddLeadModal'
+import { showToast } from '../utils/toast'
 
 export default function LeadsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -23,6 +24,7 @@ export default function LeadsPage() {
     isLoading, 
     error, 
     createLead,
+    deleteLead,
     exportLeads 
   } = useLeads(filters)
 
@@ -42,6 +44,23 @@ export default function LeadsPage() {
     setFilters(prev => ({ ...prev, limit: pageSize, page: 1 }))
   }
 
+  const handleDeleteLead = async (id: string) => {
+    try {
+      await deleteLead(id)
+      showToast.success('Lead deleted successfully')
+      
+      if (leads.length === 1 && currentPage > 1) {
+        setFilters(prev => ({ 
+          ...prev, 
+          page: Math.max(1, (prev.page ?? 1) - 1)
+        }))
+      }
+    } catch (error) {
+      showToast.error('Failed to delete lead')
+      console.error('Error deleting lead:', error)
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       {error ? (
@@ -59,6 +78,7 @@ export default function LeadsPage() {
           onSearch={handleSearch}
           onAddLead={() => setIsAddModalOpen(true)}
           onExportAll={exportLeads}
+          onDeleteLead={handleDeleteLead}
         />
       )}
 

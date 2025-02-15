@@ -17,6 +17,7 @@ interface LeadListProps {
   onSearch: (searchTerm: string) => void
   onAddLead: () => void
   onExportAll: () => void
+  onDeleteLead: (id: string) => void
 }
 
 export default function LeadList({ 
@@ -30,7 +31,8 @@ export default function LeadList({
   onPageSizeChange,
   onSearch,
   onAddLead,
-  onExportAll
+  onExportAll,
+  onDeleteLead,
 }: LeadListProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
@@ -154,7 +156,11 @@ export default function LeadList({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {leads.map((lead) => (
-              <LeadItem key={lead.id} lead={lead} />
+              <LeadItem 
+                key={lead.id} 
+                lead={lead} 
+                onDelete={onDeleteLead}
+              />
             ))}
           </tbody>
         </table>
