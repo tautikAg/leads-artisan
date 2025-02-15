@@ -9,6 +9,7 @@ import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
 import StageProgress from './StageProgress'
+import LeadDetailsSheet from './LeadDetailsSheet'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -144,6 +145,7 @@ export default function LeadList({
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
 
   // Debounce the search callback
   const debouncedSearch = useMemo(
@@ -323,7 +325,7 @@ export default function LeadList({
                 {/* View Details Button */}
                 <div className="px-4 py-3 border-t border-gray-100">
                   <button 
-                    onClick={() => {/* Handle view details */}}
+                    onClick={() => setSelectedLead(lead)}
                     className="text-sm text-purple-600 font-medium flex items-center"
                   >
                     View Details
@@ -418,6 +420,13 @@ export default function LeadList({
           pageSizeOptions={pageSizeOptions}
         />
       </div>
+
+      {/* Lead Details Sheet */}
+      <LeadDetailsSheet
+        lead={selectedLead}
+        isOpen={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
+      />
     </div>
   )
 } 
