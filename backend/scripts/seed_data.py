@@ -22,20 +22,12 @@ class LeadSeeder:
         "Meeting Scheduled",
         "Proposal Sent",
         "Negotiation",
-        "Closed Won"
+        "Closed Won",
+        "Closed Lost"
     ]
 
     # Sample lead data
     SAMPLE_LEADS: List[Dict[str, Any]] = [
-        {
-            "name": "Emma Blake",
-            "email": "emma.blake@flux.com",
-            "company": "Flux Technologies Ltd.",
-            "status": "Not Engaged",
-            "engaged": False,
-            "current_stage": "Initial Contact",
-            "last_contacted": datetime.now()
-        },
         {
             "name": "Aria Frost",
             "email": "aria.frost@prism.com",
@@ -126,14 +118,18 @@ class LeadSeeder:
         """
         current_index = cls.STAGES.index(current_stage)
         stage_history = []
-        base_time = datetime.now() - timedelta(days=30)
+        base_time = None  # Don't set base time for historical stages
 
+        # For stages before the current stage, set changed_at to None
         for i in range(current_index + 1):
             stage_change = {
                 "from_stage": cls.STAGES[i-1] if i > 0 else None,
                 "to_stage": cls.STAGES[i],
-                "changed_at": base_time + timedelta(days=i*3),
-                "notes": f"Moved to {cls.STAGES[i]}"
+                "changed_at": datetime.now() if i == current_index else None,  # Only set time for current stage
+                "notes": (
+                    f"Current stage: {cls.STAGES[i]}" if i == current_index
+                    else f"Previous stage: {cls.STAGES[i]}"
+                )
             }
             stage_history.append(stage_change)
 
@@ -157,7 +153,10 @@ class LeadSeeder:
             # Add stage history and updated timestamp
             lead_data.update({
                 "stage_history": stage_history,
-                "stage_updated_at": stage_history[-1]["changed_at"] if stage_history else datetime.now()
+                "stage_updated_at": next(
+                    (change["changed_at"] for change in reversed(stage_history) if change["changed_at"]),
+                    datetime.now()
+                )
             })
 
             # Create the lead

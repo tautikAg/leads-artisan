@@ -40,12 +40,22 @@ export interface LeadCreate {
 }
 
 export interface LeadUpdate {
-  name: string
-  email: string
-  company: string
-  current_stage: LeadStage
-  engaged: boolean
-  last_contacted: string
+  name?: string;
+  email?: string;
+  company?: string;
+  current_stage?: LeadStage;
+  engaged?: boolean;
+  last_contacted?: string;
+  status?: string;
+  stage_history?: StageHistoryItem[];
+  stage_updated_at?: string;
+}
+
+export interface StageHistoryItem {
+  from_stage: LeadStage | null;
+  to_stage: LeadStage;
+  changed_at: string | null;
+  notes?: string;
 }
 
 export interface LeadFilters {
