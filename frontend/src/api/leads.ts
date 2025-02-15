@@ -26,7 +26,24 @@ export const leadsApi = {
   },
 
   createLead: async (lead: LeadCreate) => {
-    const { data } = await api.post<Lead>('/leads', lead);
+    const leadData = {
+      name: lead.name,
+      email: lead.email,
+      company: lead.company,
+      status: lead.engaged ? "Engaged" : "Not Engaged",
+      engaged: lead.engaged,
+      current_stage: lead.current_stage,
+      stage_updated_at: new Date().toISOString(),
+      stage_history: [
+        {
+          from_stage: null,
+          to_stage: lead.current_stage,
+          changed_at: new Date().toISOString()
+        }
+      ],
+      last_contacted: lead.last_contacted
+    };
+    const { data } = await api.post<Lead>('/leads/', leadData);
     return data;
   },
 

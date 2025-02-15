@@ -3,6 +3,8 @@ import { Lead } from '../../types/lead'
 import { MoreHorizontal, Trash2, Edit2 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import ConfirmDialog from '../common/ConfirmDialog'
+import StageProgress from './StageProgress'
+import LeadDetailsSheet from './LeadDetailsSheet'
 
 interface LeadItemProps {
   lead: Lead
@@ -13,6 +15,7 @@ interface LeadItemProps {
 export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showDetails, setShowDetails] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
   // Close menu when clicking outside
@@ -44,7 +47,10 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
 
   return (
     <>
-      <tr className="hover:bg-gray-50">
+      <tr 
+        className="hover:bg-gray-50 cursor-pointer" 
+        onClick={() => setShowDetails(true)}
+      >
         <td className="py-4 pl-6">
           <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
         </td>
@@ -64,19 +70,8 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
         <td className="px-3 py-4 whitespace-nowrap">
           <div className="text-sm text-gray-900">{lead.company}</div>
         </td>
-        <td className="px-3 py-4 whitespace-nowrap">
-          <div className="flex gap-0.5">
-            {[...Array(4)].map((_, i) => (
-              <div
-                key={i}
-                className={`w-1 h-6 rounded-sm ${
-                  i < getStage(lead.status, lead.engaged)
-                    ? 'bg-purple-600' 
-                    : 'bg-gray-200'
-                }`}
-              />
-            ))}
-          </div>
+        <td className="px-3 py-4 text-sm text-gray-500">
+          <StageProgress currentStage={lead.current_stage} />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
           <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
@@ -146,6 +141,12 @@ export default function LeadItem({ lead, onEdit, onDelete }: LeadItemProps) {
         description={`Are you sure you want to delete ${lead.name}? This action cannot be undone.`}
         confirmText="Delete"
         cancelText="Cancel"
+      />
+
+      <LeadDetailsSheet 
+        lead={lead}
+        isOpen={showDetails}
+        onClose={() => setShowDetails(false)}
       />
     </>
   )
