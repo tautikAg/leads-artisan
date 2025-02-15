@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X, CheckCircle2, Calendar } from 'lucide-react'
 import Input from '../common/Input'
 import { LeadStage } from '../../types/lead'
+import DatePicker from 'react-datepicker'
+import "react-datepicker/dist/react-datepicker.css"
+import type { Modifier } from 'react-datepicker'
 
 interface AddLeadModalProps {
   isOpen: boolean
@@ -13,6 +16,7 @@ interface AddLeadModalProps {
     current_stage: LeadStage
     status: string
     engaged: boolean
+    last_contacted: string
   }) => void
   isLoading?: boolean
 }
@@ -73,12 +77,29 @@ const StageStep = ({ stage, isActive, isCompleted, onClick }: {
   </div>
 )
 
+const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+      {label}
+    </label>
+    <input
+      {...props}
+      className="
+        w-full px-4 py-3 rounded-lg border-2 border-gray-200 
+        focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
+        transition-all outline-none text-gray-800 placeholder-gray-400
+      "
+    />
+  </div>
+)
+
 export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: AddLeadModalProps) {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [company, setCompany] = useState('')
   const [currentStage, setCurrentStage] = useState<LeadStage>("New Lead")
   const [engaged, setEngaged] = useState(false)
+  const [lastContacted, setLastContacted] = useState<Date | null>(new Date())
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -88,7 +109,8 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
       company,
       current_stage: currentStage,
       status: engaged ? "Engaged" : "Not Engaged",
-      engaged
+      engaged,
+      last_contacted: lastContacted?.toISOString() || new Date().toISOString()
     })
   }
 
@@ -101,105 +123,146 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
         <div className="fixed inset-0 bg-black/30" onClick={onClose} />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="relative bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Lead</h2>
+              <button
+                onClick={onClose}
+                className="text-gray-400 hover:text-gray-500 p-1 rounded-full hover:bg-gray-50"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <Input
-                label="Name"
-                value={name}
-                onChange={e => setName(e.target.value)}
-                placeholder="John Doe"
-                required
-              />
-
-              <Input
-                label="Email"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="john@example.com"
-                required
-              />
-
-              <Input
-                label="Company"
-                value={company}
-                onChange={e => setCompany(e.target.value)}
-                placeholder="Acme Inc."
-                required
-              />
-
+            <div className="p-6 space-y-6">
+              {/* Basic Info Section */}
               <div className="space-y-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <FormInput
+                  label="Name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="John Doe"
+                  required
+                />
+
+                <FormInput
+                  label="Email"
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="john@example.com"
+                  required
+                />
+
+                <FormInput
+                  label="Company"
+                  value={company}
+                  onChange={e => setCompany(e.target.value)}
+                  placeholder="Acme Inc."
+                  required
+                />
+              </div>
+
+              {/* Last Contacted Field */}
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Last Contacted
+                </label>
+                <div className="relative">
+                  <DatePicker
+                    selected={lastContacted}
+                    onChange={(date) => setLastContacted(date)}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={15}
+                    timeCaption="Time"
+                    dateFormat="MMMM d, yyyy HH:mm"
+                    className="
+                      w-full px-4 py-3 rounded-lg border-2 border-gray-200 
+                      focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
+                      transition-all outline-none text-gray-800
+                    "
+                    placeholderText="Select date and time"
+                    calendarClassName="date-picker-calendar"
+                    popperClassName="date-picker-popper"
+                    popperPlacement="bottom-start"
+                    showTimeSelect24Hour
+                    timeCaption="Time"
+                    popperModifiers={[
+                      {
+                        name: "offset",
+                        enabled: true,
+                        options: {
+                          offset: [0, 8]
+                        }
+                      } as any
+                    ]}
+                  />
+                </div>
+              </div>
+
+              {/* Stage Selection */}
+              <div className="pt-2 relative z-0">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
                   Current Stage
                 </label>
-                <div className="relative mt-4 px-6">
-                  {/* Progress Bar */}
-                  <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200">
-                    <div 
-                      className="absolute top-0 left-0 h-full bg-purple-600 transition-all"
-                      style={{ 
-                        width: `${(STAGES.indexOf(currentStage) / (STAGES.length - 1)) * 100}%`
-                      }}
-                    />
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="relative px-6">
+                    <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200">
+                      <div 
+                        className="absolute top-0 left-0 h-full bg-purple-600 transition-all"
+                        style={{ 
+                          width: `${(STAGES.indexOf(currentStage) / (STAGES.length - 1)) * 100}%`
+                        }}
+                      />
+                    </div>
+                    <nav className="relative flex justify-between">
+                      {STAGES.map((stage, idx) => {
+                        const currentIdx = STAGES.indexOf(currentStage)
+                        const isCompleted = idx < currentIdx
+                        const isActive = stage === currentStage
+
+                        return (
+                          <StageStep
+                            key={stage}
+                            stage={stage}
+                            isActive={isActive}
+                            isCompleted={isCompleted}
+                            onClick={() => setCurrentStage(stage)}
+                          />
+                        )
+                      })}
+                    </nav>
                   </div>
-
-                  {/* Stage Steps */}
-                  <nav 
-                    aria-label="Lead Stage Progress" 
-                    className="relative flex justify-between"
-                  >
-                    {STAGES.map((stage, idx) => {
-                      const currentIdx = STAGES.indexOf(currentStage)
-                      const isCompleted = idx < currentIdx
-                      const isActive = stage === currentStage
-
-                      return (
-                        <StageStep
-                          key={stage}
-                          stage={stage}
-                          isActive={isActive}
-                          isCompleted={isCompleted}
-                          onClick={() => setCurrentStage(stage)}
-                        />
-                      )
-                    })}
-                  </nav>
                 </div>
+              </div>
 
-                <div className="mt-8">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
-                    Engagement Status
-                  </label>
-                  <div className="flex justify-center gap-4">
+              {/* Engagement Status */}
+              <div className="pt-2">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Engagement Status
+                </label>
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex gap-3">
                     <button
                       type="button"
                       onClick={() => setEngaged(false)}
                       className={`
-                        flex-1 px-4 py-3 rounded-lg border-2 transition-all
+                        flex-1 px-4 py-3 rounded-lg transition-all
                         ${!engaged 
-                          ? 'border-purple-600 bg-purple-50 text-purple-700' 
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                          ? 'bg-white shadow-md border-2 border-purple-600 text-purple-700' 
+                          : 'bg-white/60 hover:bg-white hover:shadow-sm text-gray-600'
                         }
                       `}
                     >
                       <div className="flex flex-col items-center">
-                        <span className="text-sm font-medium">
-                          Not Engaged
-                        </span>
-                        <span className="text-xs mt-1 text-gray-500">
-                          Initial contact pending
-                        </span>
+                        <span className="text-sm font-medium">Not Engaged</span>
+                        <span className="text-xs mt-1 text-gray-500">Initial contact pending</span>
                       </div>
                     </button>
 
@@ -207,20 +270,16 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                       type="button"
                       onClick={() => setEngaged(true)}
                       className={`
-                        flex-1 px-4 py-3 rounded-lg border-2 transition-all
+                        flex-1 px-4 py-3 rounded-lg transition-all
                         ${engaged 
-                          ? 'border-purple-600 bg-purple-50 text-purple-700' 
-                          : 'border-gray-200 hover:border-gray-300 text-gray-600'
+                          ? 'bg-white shadow-md border-2 border-purple-600 text-purple-700' 
+                          : 'bg-white/60 hover:bg-white hover:shadow-sm text-gray-600'
                         }
                       `}
                     >
                       <div className="flex flex-col items-center">
-                        <span className="text-sm font-medium">
-                          Engaged
-                        </span>
-                        <span className="text-xs mt-1 text-gray-500">
-                          Active communication
-                        </span>
+                        <span className="text-sm font-medium">Engaged</span>
+                        <span className="text-xs mt-1 text-gray-500">Active communication</span>
                       </div>
                     </button>
                   </div>
@@ -228,19 +287,20 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
               </div>
             </div>
 
-            <div className="mt-6 flex justify-end gap-3">
+            {/* Footer */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading}
-                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                className="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
               >
                 Add Lead
               </button>
