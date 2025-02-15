@@ -105,5 +105,18 @@ class CRUDLead:
             return Lead(**self._convert_id(lead_data))
         return None
 
+    def get_count(self, search: Optional[str] = None) -> int:
+        """Get total count of leads, optionally filtered by search"""
+        filter_query = {}
+        if search:
+            filter_query = {
+                "$or": [
+                    {"name": {"$regex": search, "$options": "i"}},
+                    {"email": {"$regex": search, "$options": "i"}},
+                    {"company": {"$regex": search, "$options": "i"}}
+                ]
+            }
+        return self.collection.count_documents(filter_query)
+
 # Global instance
 lead = CRUDLead() 

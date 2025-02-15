@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, Generic, TypeVar
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
 
 class LeadBase(BaseModel):
@@ -62,4 +62,23 @@ class LeadUpdate(BaseModel):
     company: Optional[str] = Field(None, min_length=1, max_length=100)
     status: Optional[str] = Field(None, max_length=50)
     engaged: Optional[bool] = None
-    last_contacted: Optional[datetime] = None 
+    last_contacted: Optional[datetime] = None
+
+# Add this new model for paginated response
+T = TypeVar('T')
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    """
+    Generic paginated response model
+    """
+    items: List[T]
+    total: int
+    page: int
+    page_size: int
+    total_pages: int
+
+class LeadPaginatedResponse(PaginatedResponse[Lead]):
+    """
+    Paginated response specifically for leads
+    """
+    pass 
