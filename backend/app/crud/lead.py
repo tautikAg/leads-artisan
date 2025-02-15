@@ -137,31 +137,45 @@ class CRUDLead:
             if current_lead and current_lead.current_stage != update_data["current_stage"]:
                 # Get current stage history
                 stage_history = current_lead.stage_history
-
-                # Add new stage change
-                stage_change = {
-                    "from_stage": current_lead.current_stage,
-                    "to_stage": update_data["current_stage"],
-                    "changed_at": datetime.utcnow(),
-                    "notes": f"Updated from {current_lead.current_stage} to {update_data['current_stage']}"
-                }
-                
-                # If moving forward in stages, add missing intermediate stages
                 curr_idx = self.STAGES.index(current_lead.current_stage)
                 new_idx = self.STAGES.index(update_data["current_stage"])
-                
-                if new_idx > curr_idx:
-                    # Add intermediate stages with None timestamps
+
+                # If moving backwards
+                if new_idx < curr_idx:
+                    # Find the first occurrence of the target stage in history
+                    target_stage_idx = None
+                    for i, stage in enumerate(stage_history):
+                        if stage["to_stage"] == update_data["current_stage"]:
+                            target_stage_idx = i
+                            break
+                    
+                    if target_stage_idx is not None:
+                        # Keep only the history up to the target stage
+                        stage_history = stage_history[:target_stage_idx + 1]
+                    else:
+                        # If target stage not found in history (shouldn't happen normally)
+                        # Generate history up to the target stage
+                        stage_history = self._generate_stage_history(update_data["current_stage"])
+                else:
+                    # Moving forward - add intermediate stages
                     for i in range(curr_idx + 1, new_idx):
                         intermediate_change = {
                             "from_stage": self.STAGES[i-1],
                             "to_stage": self.STAGES[i],
-                            "changed_at": None,  # No specific time for intermediate stages
+                            "changed_at": None,
                             "notes": f"Intermediate stage between {current_lead.current_stage} and {update_data['current_stage']}"
                         }
                         stage_history.append(intermediate_change)
+
+                    # Add the new stage change
+                    stage_change = {
+                        "from_stage": current_lead.current_stage,
+                        "to_stage": update_data["current_stage"],
+                        "changed_at": datetime.utcnow(),
+                        "notes": f"Updated from {current_lead.current_stage} to {update_data['current_stage']}"
+                    }
+                    stage_history.append(stage_change)
                 
-                stage_history.append(stage_change)
                 update_data["stage_history"] = stage_history
                 update_data["stage_updated_at"] = datetime.utcnow()
 

@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Any, List, Optional
 from fastapi import APIRouter, HTTPException, Query
 from app.crud.lead import lead
 from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
@@ -71,22 +71,31 @@ def get_lead(lead_id: str) -> Lead:
     return db_lead
 
 @router.put("/{lead_id}", response_model=Lead)
-async def update_lead(lead_id: str, lead_update: LeadUpdate):
+async def update_lead(
+    lead_id: str,
+    lead_in: dict  # Change this to accept raw dict instead of LeadUpdate
+) -> Any:
+    """
+    Update a lead.
+    """
     try:
-        # Convert Pydantic model to dict, excluding unset values
-        update_data = lead_update.model_dump(exclude_unset=True)
+        # Print debug information
+        print("Updating lead:", lead_id)
+        print("Update data:", lead_in)
         
-        updated_lead = await lead_crud.update(
-            id=lead_id,
-            update_data=update_data
-        )
+        # Update the lead
+        updated_lead = await lead.update(id=lead_id, update_data=lead_in)
         
         if not updated_lead:
             raise HTTPException(status_code=404, detail="Lead not found")
-            
+        
         return updated_lead
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print("Error updating lead:", str(e))  # Debug print
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error updating lead: {str(e)}"
+        )
 
 @router.delete("/{lead_id}", response_model=Lead)
 async def delete_lead(lead_id: str) -> Lead:

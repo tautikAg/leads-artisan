@@ -62,7 +62,7 @@ export function useLeads(filters: LeadFilters): UseLeadsReturn {
     mutationFn: ({ id, data }) => leadsApi.updateLead(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-    }
+    },
   });
 
   const deleteMutation = useMutation({

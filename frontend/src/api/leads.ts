@@ -49,15 +49,18 @@ export const leadsApi = {
 
   updateLead: async (id: string, data: LeadUpdate) => {
     try {
-      const { data: updatedLead } = await api.put<Lead>(`/leads/${id}/`, {
+      // Don't modify stage_updated_at if we're updating stage_history
+      const updateData = {
         ...data,
-        status: data.engaged ? "Engaged" : "Not Engaged",
-        stage_updated_at: new Date().toISOString(),
-      })
-      return updatedLead
+        status: data.engaged !== undefined ? (data.engaged ? "Engaged" : "Not Engaged") : undefined,
+        stage_updated_at: data.stage_history ? data.stage_updated_at : new Date().toISOString(),
+      };
+
+      const { data: updatedLead } = await api.put<Lead>(`/leads/${id}`, updateData);
+      return updatedLead;
     } catch (error) {
-      console.error('Error updating lead:', error)
-      throw error
+      console.error('Error updating lead:', error);
+      throw error;
     }
   },
 
