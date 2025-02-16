@@ -50,7 +50,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     queryFn: () => leadsApi.getLeads(filters),
     staleTime: 1000 * 60,
     placeholderData: (previousData) => {
-      console.log('Previous query data:', previousData);
       return previousData;
     },
     refetchOnWindowFocus: false,

@@ -14,8 +14,12 @@ import { LeadFilters } from '../types/lead'
 import LeadTable from '../components/list/LeadTable'
 import AddLeadModal from '../components/modals/AddLeadModal'
 import { showToast } from '../utils/toast'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 const LeadsPage: React.FC = () => {
+  // Initialize WebSocket connection
+  useWebSocket();
+
   // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   

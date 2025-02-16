@@ -10,3 +10,4 @@ passlib
 python-multipart
 pymongo
 dnspython
+websockets==12.0

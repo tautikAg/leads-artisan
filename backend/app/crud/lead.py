@@ -6,6 +6,7 @@ from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadStage, StageChange
 from app.core.exceptions import LeadNotFoundException, DuplicateLeadException
 from app.db.database import get_database
 from app.core.logging import logger
+from app.core.websocket import ws_manager
 
 class CRUDLead:
     """
@@ -139,7 +140,19 @@ class CRUDLead:
             created_lead = await collection.find_one({"_id": result.inserted_id})
             created_lead["id"] = str(created_lead.pop("_id"))
             
-            return Lead(**created_lead)
+            # Create Lead model instance for proper attribute access
+            lead_model = Lead(**created_lead)
+            
+            logger.info(f"Broadcasting lead creation: {lead_model.dict()}")
+            await ws_manager.broadcast_update(
+                "lead_created",
+                {
+                    "lead": lead_model.dict(),
+                    "message": f"New lead created: {lead_model.name}"
+                }
+            )
+            
+            return lead_model
             
         except Exception as e:
             logger.error(f"Error creating lead: {str(e)}")
@@ -175,7 +188,17 @@ class CRUDLead:
             
             if result:
                 result["id"] = str(result.pop("_id"))
-                return Lead(**result)
+                updated_lead = Lead(**result)
+                
+                logger.info(f"Broadcasting lead update: {updated_lead.dict()}")
+                await ws_manager.broadcast_update(
+                    "lead_updated",
+                    {
+                        "lead": updated_lead.dict(),
+                        "message": f"Lead updated: {updated_lead.name}"
+                    }
+                )
+                return updated_lead
             
             raise LeadNotFoundException(id)
             

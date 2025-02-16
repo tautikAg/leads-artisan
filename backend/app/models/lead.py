@@ -90,6 +90,23 @@ class Lead(LeadBase):
             "progress_percentage": (current_index / total_stages) * 100 if current_index < total_stages else 100
         }
 
+    def dict(self, *args, **kwargs):
+        # Get the dictionary representation of the model
+        d = super().dict(*args, **kwargs)
+        
+        # Convert datetime fields to ISO format strings
+        for field, value in d.items():
+            if isinstance(value, datetime):
+                d[field] = value.isoformat()
+            
+            # Handle datetime objects in stage_history
+            if field == 'stage_history' and isinstance(value, list):
+                for stage in value:
+                    if stage.get('changed_at') and isinstance(stage['changed_at'], datetime):
+                        stage['changed_at'] = stage['changed_at'].isoformat()
+        
+        return d
+
     model_config = ConfigDict(from_attributes=True)
 
 class LeadCreate(LeadBase):
