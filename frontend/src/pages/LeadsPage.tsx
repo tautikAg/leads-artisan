@@ -68,26 +68,22 @@ const LeadsPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {error ? (
-        <div className="text-red-500">Error loading leads</div>
-      ) : (
-        <LeadTable 
-          initialLeads={leads}
-          isLoading={isLoading}
-          totalLeads={totalLeads}
-          currentPage={currentPage}
-          pageSize={pageSize}
-          totalPages={totalPages}
-          onPageChange={onPageChange}
-          onPageSizeChange={onPageSizeChange}
-          onSearch={onSearch}
-          onAddLead={() => setIsAddModalOpen(true)}
-          onExportAll={exportLeads}
-          onDeleteLead={handleDeleteLead}
-          onSort={onSort}
-          currentSort={sort}
-        />
-      )}
+      <LeadTable 
+        initialLeads={leads ?? []}  // Provide empty array as fallback
+        isLoading={isLoading}
+        totalLeads={totalLeads}
+        currentPage={currentPage}
+        pageSize={pageSize}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+        onPageSizeChange={onPageSizeChange}
+        onSearch={onSearch}
+        onAddLead={() => setIsAddModalOpen(true)}
+        onExportAll={exportLeads}
+        onDeleteLead={handleDeleteLead}
+        onSort={onSort}
+        currentSort={sort}
+      />
 
       <AddLeadModal
         isOpen={isAddModalOpen}
