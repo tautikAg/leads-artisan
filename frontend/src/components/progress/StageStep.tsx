@@ -1,3 +1,13 @@
+/**
+ * StageStep Component
+ * 
+ * Represents an individual step in the lead stage progression.
+ * Shows a circular indicator that can be:
+ * - Completed (purple with checkmark)
+ * - Active (purple outline)
+ * - Upcoming (gray outline)
+ * Includes a hover tooltip showing the stage name.
+ */
 import { CheckCircle2 } from 'lucide-react'
 import { LeadStage } from '../../types/lead'
 

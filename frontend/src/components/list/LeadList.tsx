@@ -126,6 +126,13 @@ const Pagination = ({
   </div>
 )
 
+/**
+ * Main lead list component that handles:
+ * - Pagination
+ * - Sorting
+ * - Filtering
+ * - Lead CRUD operations
+ */
 export default function LeadList({ 
   initialLeads = [],
   isLoading,
@@ -142,13 +149,14 @@ export default function LeadList({
   onSort,
   currentSort,
 }: LeadListProps) {
+  // State for search and selected leads
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [showMobileMenu, setShowMobileMenu] = useState<string | null>(null)
 
-  // Debounce the search callback
+  // Debounce search to prevent excessive API calls
   const debouncedSearch = useMemo(
     () => debounce((value: string) => {
       onSearch(value);

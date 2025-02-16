@@ -11,6 +11,10 @@ interface StageHistoryTimelineProps {
   isUpdating?: boolean
 }
 
+/**
+ * Displays a timeline of stage changes for a lead.
+ * Allows editing of stage change dates with inline date picker.
+ */
 export default function StageHistoryTimeline({ 
   history, 
   onEditDate,
@@ -19,14 +23,12 @@ export default function StageHistoryTimeline({
   const [editingIndex, setEditingIndex] = useState<number | null>(null)
   const [editDate, setEditDate] = useState<Date | null>(null)
 
-  console.log('Stage History:', history)
-
+  // Handlers for date editing
   const handleEdit = (index: number, date: string) => {
     setEditingIndex(index)
     try {
       setEditDate(date ? parseISO(date) : new Date())
     } catch (error) {
-      console.warn('Invalid date string:', date)
       setEditDate(new Date())
     }
   }
@@ -39,12 +41,12 @@ export default function StageHistoryTimeline({
     }
   }
 
+  // Utility function for date formatting
   const formatDate = (dateString: string | null | undefined): string => {
     if (!dateString) return 'N/A'
     try {
       return format(parseISO(dateString), 'MMM d, yyyy h:mm aa')
     } catch (error) {
-      console.warn('Invalid date string:', dateString)
       return 'Invalid date'
     }
   }

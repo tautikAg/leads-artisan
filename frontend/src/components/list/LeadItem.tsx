@@ -15,28 +15,21 @@ interface LeadItemProps {
   isMobile: boolean
 }
 
+/**
+ * Individual lead item component that renders in both mobile and desktop views.
+ * Handles lead actions like edit, delete, and viewing details.
+ */
 export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadItemProps) {
+  // UI state management
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  
   const menuRef = useRef<HTMLDivElement>(null)
   const { updateLead } = useLeads({ page: 1 })
 
-  // Add debug logs for state changes
-  useEffect(() => {
-    console.log('Menu state changed:', showMenu)
-  }, [showMenu])
-
-  useEffect(() => {
-    console.log('Edit modal state changed:', showEditModal)
-  }, [showEditModal])
-
-  useEffect(() => {
-    console.log('Delete confirm state changed:', showDeleteConfirm)
-  }, [showDeleteConfirm])
-
-  // Close menu when clicking outside
+  // Close dropdown menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -48,22 +41,26 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Don't open details if clicking the checkbox or menu
-    if (
-      !menuRef.current?.contains(e.target as Node) && 
-      !(e.target as HTMLElement).closest('input[type="checkbox"]')
-    ) {
-      setShowDetails(true)
-    }
-  }
-
+  // Utility functions
   const getInitials = (name: string) => {
     return name
       .split(' ')
       .map(part => part[0])
       .join('')
       .toUpperCase()
+  }
+
+  // Event handlers
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowEditModal(true)
+    setShowMenu(false)
+  }
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    setShowDeleteConfirm(true)
+    setShowMenu(false)
   }
 
   // Calculate stage based on status and engaged
@@ -73,50 +70,14 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     return 1;
   }
 
-  const handleEditClick = (e: React.MouseEvent) => {
-    try {
-      console.log('Edit button clicked for lead:', lead.id)
-      e.stopPropagation()
-      setShowEditModal(true)
-      setShowMenu(false)
-      console.log('Edit modal should be open now')
-    } catch (error) {
-      console.error('Error in handleEditClick:', error)
-    }
-  }
-
-  const handleDeleteClick = (e: React.MouseEvent) => {
-    try {
-      console.log('Delete button clicked for lead:', lead.id)
-      e.stopPropagation()
-      setShowDeleteConfirm(true)
-      setShowMenu(false)
-      console.log('Delete confirm should be open now')
-    } catch (error) {
-      console.error('Error in handleDeleteClick:', error)
-    }
-  }
-
   const handleDeleteConfirm = () => {
-    try {
-      console.log('Confirming delete for lead:', lead.id)
-      onDelete(lead.id)
-      setShowDeleteConfirm(false)
-      console.log('Delete confirmed and modal closed')
-    } catch (error) {
-      console.error('Error in handleDeleteConfirm:', error)
-    }
+    onDelete(lead.id)
+    setShowDeleteConfirm(false)
   }
 
   const handleEditSubmitAsync = async (data: LeadUpdate) => {
-    try {
-      console.log('Submitting edit for lead:', lead.id, data)
-      await updateLead({ id: lead.id, data })
-      setShowEditModal(false)
-      console.log('Edit submitted successfully')
-    } catch (error) {
-      console.error('Failed to update lead:', error)
-    }
+    await updateLead({ id: lead.id, data })
+    setShowEditModal(false)
   }
 
   const handleEditSubmit = (id: string, data: LeadUpdate) => {
@@ -145,7 +106,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
             <div ref={menuRef} className="relative">
               <button
                 onClick={(e) => {
-                  console.log('Mobile menu button clicked')
                   e.stopPropagation()
                   setShowMenu(!showMenu)
                 }}
@@ -203,7 +163,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           <ConfirmDialog
             isOpen={showDeleteConfirm}
             onClose={() => {
-              console.log('Closing delete confirm')
               setShowDeleteConfirm(false)
             }}
             onConfirm={handleDeleteConfirm}
@@ -217,7 +176,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
             lead={lead}
             isOpen={showEditModal}
             onClose={() => {
-              console.log('Closing edit modal')
               setShowEditModal(false)
             }}
             onSubmit={handleEditSubmit}
@@ -239,7 +197,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     <>
       <tr 
         className="hover:bg-gray-50 cursor-pointer"
-        onClick={handleRowClick}
+        onClick={() => setShowDetails(true)}
       >
         <td className="py-4 pl-6" onClick={e => e.stopPropagation()}>
           <input 
@@ -326,7 +284,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => {
-          console.log('Closing delete confirm')
           setShowDeleteConfirm(false)
         }}
         onConfirm={handleDeleteConfirm}
@@ -340,7 +297,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
         lead={lead}
         isOpen={showEditModal}
         onClose={() => {
-          console.log('Closing edit modal')
           setShowEditModal(false)
         }}
         onSubmit={handleEditSubmit}

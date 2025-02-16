@@ -1,3 +1,10 @@
+/**
+ * StageSelector Component
+ * 
+ * A specialized input component for selecting lead stages.
+ * Provides a visual progress bar with clickable stage indicators
+ * and tooltips. Used within lead forms for stage selection.
+ */
 import { LeadStage } from '../../types/lead'
 import StageProgressBar from '../progress/StageProgressBar'
 import StageStep from '../progress/StageStep'

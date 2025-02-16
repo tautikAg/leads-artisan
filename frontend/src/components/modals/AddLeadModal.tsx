@@ -24,7 +24,12 @@ interface AddLeadModalProps {
   isLoading?: boolean
 }
 
+/**
+ * Modal component for adding new leads to the system.
+ * Handles form state and validation for creating lead records.
+ */
 export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: AddLeadModalProps) {
+  // Use custom hook to manage form state and validation
   const {
     name,
     setName,
@@ -40,8 +45,10 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
     setLastContacted,
   } = useLeadForm()
 
+  // Handle form submission and data validation
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // Transform form data into lead record format
     onSubmit({
       name,
       email,
@@ -53,6 +60,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
     })
   }
 
+  // Don't render if modal is not open
   if (!isOpen) return null
 
   return (

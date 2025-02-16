@@ -1,3 +1,10 @@
+/**
+ * EngagementStatusButtons Component
+ * 
+ * A toggle button group for selecting lead engagement status.
+ * Provides visual feedback for engaged/not engaged states with
+ * descriptions for each option.
+ */
 import { useEngagementStatus } from '../../hooks/useEngagementStatus'
 
 interface EngagementStatusButtonsProps {

@@ -136,19 +136,18 @@ const StageHistoryItem = ({
   );
 };
 
+/**
+ * Slide-out sheet component that displays detailed lead information.
+ * Includes stage history, contact info, and quick actions.
+ */
 export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsSheetProps) {
-  // Add debug logging
-  console.log('Lead in Sheet:', lead)
-  
   const { updateLead } = useLeads({ page: 1 })
   const [isUpdating, setIsUpdating] = useState(false)
   
   // Initialize stage history from lead data
   const { stageHistory, editStageDate } = useStageHistory(lead?.stage_history || [])
-  
-  // Add debug logging for stage history
-  console.log('Stage History in Sheet:', stageHistory)
 
+  // Handle saving stage date changes
   const handleSaveStageDate = async (index: number, newDate: Date) => {
     if (!lead) return
     
@@ -157,7 +156,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
       editStageDate(index, newDate)
       const newChangedAt = newDate.toISOString()
       
-      // If we're updating the latest stage, update stage_updated_at
+      // Update stage_updated_at if modifying the latest stage
       const isLatestStage = index === stageHistory.length - 1
       
       const updateData: LeadUpdate = {

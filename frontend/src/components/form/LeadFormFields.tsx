@@ -1,3 +1,15 @@
+/**
+ * LeadFormFields Component
+ * 
+ * A comprehensive form component that manages all fields needed for
+ * lead creation/editing. Includes:
+ * - Basic information (name, email, company)
+ * - Stage selection
+ * - Last contacted date
+ * - Engagement status
+ * 
+ * Used by both Add and Edit lead modals.
+ */
 import { ChangeEvent } from 'react'
 import { FormInput } from '../common/FormInput'
 import DatePicker from 'react-datepicker'
@@ -35,6 +47,9 @@ export default function LeadFormFields({
   setLastContacted,
   stages
 }: LeadFormFieldsProps) {
+  /**
+   * Handle input changes with proper typing
+   */
   const handleInputChange = (setter: (value: string) => void) => (
     e: ChangeEvent<HTMLInputElement>
   ) => {

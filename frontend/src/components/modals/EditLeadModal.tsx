@@ -19,7 +19,12 @@ interface EditLeadModalProps {
   isLoading?: boolean
 }
 
+/**
+ * Modal component for editing existing leads.
+ * Manages form state, validation, and stage history tracking.
+ */
 export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoading }: EditLeadModalProps) {
+  // Use form management hook with initial lead data
   const {
     name,
     setName,
@@ -35,10 +40,11 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     setLastContacted,
   } = useLeadForm({ initialData: lead })
 
+  // Track stage history changes
   const { stageHistory, updateStageHistory } = useStageHistory(lead.stage_history)
   const [initialStage] = useState<LeadStage>(lead.current_stage)
 
-  // Update form when lead changes
+  // Update form when lead data changes
   useEffect(() => {
     setName(lead.name)
     setEmail(lead.email)
@@ -48,6 +54,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     setLastContacted(new Date(lead.last_contacted))
   }, [lead])
 
+  // Handle stage changes and update history
   const handleStageChange = (newStage: LeadStage) => {
     setCurrentStage(newStage)
     updateStageHistory(currentStage, newStage)
