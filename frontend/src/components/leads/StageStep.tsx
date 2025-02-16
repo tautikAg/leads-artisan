@@ -6,13 +6,15 @@ interface StageStepProps {
   isActive: boolean
   isCompleted: boolean
   onClick: () => void
+  index: number
 }
 
 export default function StageStep({ 
   stage, 
   isActive, 
   isCompleted, 
-  onClick 
+  onClick,
+  index
 }: StageStepProps) {
   return (
     <div className="relative group">
@@ -40,7 +42,7 @@ export default function StageStep({
             <span className={`text-sm font-medium ${
               isActive ? 'text-purple-600' : 'text-gray-500'
             }`}>
-              {stage}
+              {index + 1}
             </span>
           )}
         </div>

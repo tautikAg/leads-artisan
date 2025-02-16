@@ -1,8 +1,14 @@
 import { useState } from 'react'
-import { X, CheckCircle2 } from 'lucide-react'
+import { X } from 'lucide-react'
 import { LeadStage } from '../../types/lead'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
+import { LEAD_STAGES } from '../../constants/leads'
+import StageProgressBar from './StageProgressBar'
+import StageStep from './StageStep'
+import EngagementStatusButtons from './EngagementStatusButtons'
+import { FormInput } from '../common/FormInput'
+import { useLeadForm } from '../../hooks/useLeadForm'
 
 interface AddLeadModalProps {
   isOpen: boolean
@@ -19,85 +25,21 @@ interface AddLeadModalProps {
   isLoading?: boolean
 }
 
-const STAGES: LeadStage[] = [
-  "New Lead",
-  "Initial Contact",
-  "Meeting Scheduled",
-  "Proposal Sent",
-  "Negotiation",
-  "Closed Won"
-]
-
-const StageStep = ({ stage, isActive, isCompleted, onClick }: {
-  stage: LeadStage
-  isActive: boolean
-  isCompleted: boolean
-  onClick: () => void
-}) => (
-  <div className="relative group">
-    <div 
-      onClick={onClick}
-      className={`
-        relative flex items-center cursor-pointer
-        ${isActive ? 'z-10' : ''}
-      `}
-    >
-      <div 
-        className={`
-          flex h-12 w-12 items-center justify-center rounded-full transition-all
-          ${isCompleted 
-            ? 'bg-purple-600 group-hover:bg-purple-700' 
-            : isActive 
-              ? 'bg-purple-100 border-2 border-purple-600'
-              : 'bg-white border-2 border-gray-300 group-hover:border-gray-400'
-          }
-        `}
-      >
-        {isCompleted ? (
-          <CheckCircle2 className="h-6 w-6 text-white" />
-        ) : (
-          <span className={`text-sm font-medium ${
-            isActive ? 'text-purple-600' : 'text-gray-500'
-          }`}>
-            {STAGES.indexOf(stage) + 1}
-          </span>
-        )}
-      </div>
-    </div>
-
-    {/* Tooltip */}
-    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity">
-      <div className="bg-gray-900 text-white text-sm px-3 py-1.5 rounded-md whitespace-nowrap">
-        {stage}
-      </div>
-      <div className="w-2 h-2 bg-gray-900 transform rotate-45 absolute -bottom-1 left-1/2 -translate-x-1/2" />
-    </div>
-  </div>
-)
-
-const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string }) => (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-      {label}
-    </label>
-    <input
-      {...props}
-      className="
-        w-full px-4 py-3 rounded-lg border-2 border-gray-200 
-        focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
-        transition-all outline-none text-gray-800 placeholder-gray-400
-      "
-    />
-  </div>
-)
-
 export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: AddLeadModalProps) {
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [company, setCompany] = useState('')
-  const [currentStage, setCurrentStage] = useState<LeadStage>("New Lead")
-  const [engaged, setEngaged] = useState(false)
-  const [lastContacted, setLastContacted] = useState<Date | null>(new Date())
+  const {
+    name,
+    setName,
+    email,
+    setEmail,
+    company,
+    setCompany,
+    currentStage,
+    setCurrentStage,
+    engaged,
+    setEngaged,
+    lastContacted,
+    setLastContacted,
+  } = useLeadForm()
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -108,7 +50,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
       current_stage: currentStage,
       status: engaged ? "Engaged" : "Not Engaged",
       engaged,
-      last_contacted: lastContacted?.toISOString() || new Date().toISOString()
+      last_contacted: lastContacted.toISOString()
     })
   }
 
@@ -171,35 +113,13 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Last Contacted
                 </label>
-                <div className="relative">
-                  <DatePicker
-                    selected={lastContacted}
-                    onChange={(date) => setLastContacted(date)}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    timeIntervals={15}
-                    dateFormat="MMMM d, yyyy HH:mm"
-                    className="
-                      w-full px-4 py-3 rounded-lg border-2 border-gray-200 
-                      focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
-                      transition-all outline-none text-gray-800
-                    "
-                    placeholderText="Select date and time"
-                    calendarClassName="date-picker-calendar"
-                    popperClassName="date-picker-popper"
-                    popperPlacement="bottom-start"
-                    timeCaption="Time"
-                    popperModifiers={[
-                      {
-                        name: "offset",
-                        enabled: true,
-                        options: {
-                          offset: [0, 8]
-                        }
-                      } as any
-                    ]}
-                  />
-                </div>
+                <DatePicker
+                  selected={lastContacted}
+                  onChange={(date) => setLastContacted(date || new Date())}
+                  showTimeSelect
+                  dateFormat="MMMM d, yyyy h:mm aa"
+                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-50 focus:ring-4 transition-all outline-none"
+                />
               </div>
 
               {/* Stage Selection */}
@@ -207,34 +127,26 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Current Stage
                 </label>
-                <div className="bg-gray-50 rounded-lg p-3 sm:p-6">
-                  <div className="relative px-2 sm:px-6">
-                    <div className="absolute top-6 left-0 w-full h-0.5 bg-gray-200">
-                      <div 
-                        className="absolute top-0 left-0 h-full bg-purple-600 transition-all"
-                        style={{ 
-                          width: `${(STAGES.indexOf(currentStage) / (STAGES.length - 1)) * 100}%`
-                        }}
-                      />
-                    </div>
-                    <nav className="relative flex justify-between">
-                      {STAGES.map((stage, idx) => {
-                        const currentIdx = STAGES.indexOf(currentStage)
-                        const isCompleted = idx < currentIdx
-                        const isActive = stage === currentStage
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <StageProgressBar currentStage={currentStage} />
+                  <nav className="relative flex justify-between">
+                    {LEAD_STAGES.map((stage, idx) => {
+                      const currentIdx = LEAD_STAGES.indexOf(currentStage)
+                      const isCompleted = idx < currentIdx
+                      const isActive = stage === currentStage
 
-                        return (
-                          <StageStep
-                            key={stage}
-                            stage={stage}
-                            isActive={isActive}
-                            isCompleted={isCompleted}
-                            onClick={() => setCurrentStage(stage)}
-                          />
-                        )
-                      })}
-                    </nav>
-                  </div>
+                      return (
+                        <StageStep
+                          key={stage}
+                          stage={stage}
+                          isActive={isActive}
+                          isCompleted={isCompleted}
+                          onClick={() => setCurrentStage(stage)}
+                          index={idx}
+                        />
+                      )
+                    })}
+                  </nav>
                 </div>
               </div>
 
@@ -243,43 +155,10 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Engagement Status
                 </label>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setEngaged(false)}
-                      className={`
-                        flex-1 px-4 py-3 rounded-lg transition-all
-                        ${!engaged 
-                          ? 'bg-white shadow-md border-2 border-purple-600 text-purple-700' 
-                          : 'bg-white/60 hover:bg-white hover:shadow-sm text-gray-600'
-                        }
-                      `}
-                    >
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-medium">Not Engaged</span>
-                        <span className="text-xs mt-1 text-gray-500">Initial contact pending</span>
-                      </div>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setEngaged(true)}
-                      className={`
-                        flex-1 px-4 py-3 rounded-lg transition-all
-                        ${engaged 
-                          ? 'bg-white shadow-md border-2 border-purple-600 text-purple-700' 
-                          : 'bg-white/60 hover:bg-white hover:shadow-sm text-gray-600'
-                        }
-                      `}
-                    >
-                      <div className="flex flex-col items-center">
-                        <span className="text-sm font-medium">Engaged</span>
-                        <span className="text-xs mt-1 text-gray-500">Active communication</span>
-                      </div>
-                    </button>
-                  </div>
-                </div>
+                <EngagementStatusButtons 
+                  engaged={engaged}
+                  onChange={setEngaged}
+                />
               </div>
             </div>
 

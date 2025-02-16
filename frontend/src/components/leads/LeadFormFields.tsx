@@ -96,6 +96,7 @@ export default function LeadFormFields({
                     isActive={isActive}
                     isCompleted={isCompleted}
                     onClick={() => setCurrentStage(stage)}
+                    index={idx}
                   />
                 )
               })}
