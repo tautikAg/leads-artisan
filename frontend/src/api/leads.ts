@@ -1,5 +1,5 @@
 import { api } from './axios';
-import { Lead, LeadCreate, LeadUpdate, LeadFilters, LeadStage } from '../types/lead';
+import { Lead, LeadCreate, LeadUpdate, LeadFilters } from '../types/lead';
 import { websocketService } from '../services/websocket'
 
 interface PaginatedResponse<T> {
