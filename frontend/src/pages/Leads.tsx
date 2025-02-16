@@ -9,7 +9,7 @@
  */
 import React, { useState, useEffect } from 'react'
 import { Lead } from '../types/lead'
-import LeadList from '../components/list/LeadList'
+import LeadTable from '../components/list/LeadTable'
 import { leadsApi } from '../api/leads'
 import { SortDirection } from '../types/common'
 
@@ -86,7 +86,7 @@ const Leads: React.FC = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <LeadList
+      <LeadTable
         initialLeads={leads}
         isLoading={isLoading}
         totalLeads={totalLeads}

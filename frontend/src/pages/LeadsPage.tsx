@@ -11,7 +11,7 @@
 import React, { useState } from 'react'
 import { useLeads } from '../hooks/useLeads'
 import { LeadFilters } from '../types/lead'
-import LeadList from '../components/list/LeadList'
+import LeadTable from '../components/list/LeadTable'
 import AddLeadModal from '../components/modals/AddLeadModal'
 import { showToast } from '../utils/toast'
 
@@ -71,7 +71,7 @@ const LeadsPage: React.FC = () => {
       {error ? (
         <div className="text-red-500">Error loading leads</div>
       ) : (
-        <LeadList 
+        <LeadTable 
           initialLeads={leads}
           isLoading={isLoading}
           totalLeads={totalLeads}

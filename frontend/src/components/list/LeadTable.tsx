@@ -11,7 +11,7 @@ import { format } from 'date-fns'
 import LeadDetailsSheet from './LeadDetailsSheet'
 import { Menu, Transition } from '@headlessui/react'
 
-interface LeadListProps {
+interface LeadTableProps {
   initialLeads: Lead[]
   isLoading: boolean
   totalLeads: number
@@ -133,7 +133,7 @@ const Pagination = ({
  * - Filtering
  * - Lead CRUD operations
  */
-export default function LeadList({ 
+export default function LeadTable({ 
   initialLeads = [],
   isLoading,
   totalLeads,
@@ -148,7 +148,7 @@ export default function LeadList({
   onDeleteLead,
   onSort,
   currentSort,
-}: LeadListProps) {
+}: LeadTableProps) {
   // State for search and selected leads
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)

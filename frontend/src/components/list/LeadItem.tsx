@@ -65,12 +65,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile, isSelecte
     setShowMenu(false)
   }
 
-  // Calculate stage based on status and engaged
-  const getStage = (status: string, engaged: boolean) => {
-    if (status === 'Engaged' && engaged) return 4;
-    if (status === 'Not Engaged' && !engaged) return 2;
-    return 1;
-  }
 
   const handleDeleteConfirm = () => {
     onDelete(lead.id)
