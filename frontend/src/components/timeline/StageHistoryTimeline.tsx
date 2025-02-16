@@ -95,6 +95,7 @@ export default function StageHistoryTimeline({
                           showTimeSelect
                           timeFormat="h:mm aa"
                           timeIntervals={15}
+                          popperPlacement="bottom-end"
                         />
                         <div className="flex gap-1.5 border-t mt-1.5 pt-1.5 justify-end">
                           <button 
