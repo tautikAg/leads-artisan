@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical, Edit2, Trash2 } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
@@ -147,6 +147,7 @@ export default function LeadList({
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [showMobileMenu, setShowMobileMenu] = useState<string | null>(null)
 
   // Debounce the search callback
   const debouncedSearch = useMemo(
@@ -232,6 +233,17 @@ export default function LeadList({
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
   };
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showMobileMenu && !(event.target as Element).closest('.mobile-menu-container')) {
+        setShowMobileMenu(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileMenu]);
 
   if (isLoading) {
     return (
@@ -345,51 +357,13 @@ export default function LeadList({
         {Array.isArray(leads) && leads.length > 0 ? (
           <div className="space-y-2 px-4">
             {leads.map((lead) => (
-              <div 
-                key={lead.id}
-                className="bg-white rounded-lg border border-gray-200"
-              >
-                {/* Lead Header */}
-                <div className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 flex-shrink-0 rounded-full bg-purple-100 flex items-center justify-center">
-                      <span className="text-sm font-medium text-purple-600">
-                        {lead.name.split(' ').map(part => part[0]).join('').toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{lead.name}</div>
-                      <div className="text-sm text-gray-500">{lead.company}</div>
-                    </div>
-                  </div>
-                  <button className="p-2 hover:bg-gray-50 rounded-full">
-                    <MoreHorizontal className="h-5 w-5 text-gray-400" />
-                  </button>
-                </div>
-
-                {/* Stage and Status */}
-                <div className="px-4 py-2 flex items-center gap-3">
-                  <div className="flex-1">
-                    <StageProgress currentStage={lead.current_stage} />
-                  </div>
-                  <span className={`
-                    inline-flex rounded-full px-2 text-xs font-medium leading-5
-                    ${lead.engaged ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-                  `}>
-                    {lead.status}
-                  </span>
-                </div>
-
-                {/* View Details Button */}
-                <div className="px-4 py-3 border-t border-gray-100">
-                  <button 
-                    onClick={() => setSelectedLead(lead)}
-                    className="text-sm text-purple-600 font-medium flex items-center"
-                  >
-                    View Details
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                  </button>
-                </div>
+              <div key={lead.id} className="bg-white rounded-lg border border-gray-200">
+                <LeadItem 
+                  lead={lead} 
+                  onDelete={onDeleteLead}
+                  onUpdate={handleLeadUpdate}
+                  isMobile={true}
+                />
               </div>
             ))}
           </div>
@@ -439,6 +413,7 @@ export default function LeadList({
                         lead={lead} 
                         onDelete={onDeleteLead}
                         onUpdate={handleLeadUpdate}
+                        isMobile={false}
                       />
                     ))
                   ) : (

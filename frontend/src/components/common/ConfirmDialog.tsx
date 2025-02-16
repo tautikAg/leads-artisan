@@ -7,8 +7,8 @@ interface ConfirmDialogProps {
   onConfirm: () => void
   title: string
   description: string
-  confirmText?: string
-  cancelText?: string
+  confirmText: string
+  cancelText: string
   isLoading?: boolean
 }
 
@@ -18,8 +18,8 @@ export default function ConfirmDialog({
   onConfirm,
   title,
   description,
-  confirmText = 'Delete',
-  cancelText = 'Cancel',
+  confirmText,
+  cancelText = "Cancel",
   isLoading = false
 }: ConfirmDialogProps) {
   return (
