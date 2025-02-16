@@ -188,7 +188,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
         {lead && (
           <>
             {/* Wrap SheetHeader in a div with the sticky styling */}
-            <div className="sticky top-0 bg-white z-10 pb-4 border-b">
+            <div className="sticky top-0 bg-white z-10">
               <SheetHeader>
                 <div className="flex justify-between items-start">
                   <div>
