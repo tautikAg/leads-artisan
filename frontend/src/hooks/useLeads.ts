@@ -49,7 +49,10 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     queryKey: ['leads', filters],
     queryFn: () => leadsApi.getLeads(filters),
     staleTime: 1000 * 60,
-    placeholderData: (previousData) => previousData,
+    placeholderData: (previousData) => {
+      console.log('Previous query data:', previousData);
+      return previousData;
+    },
     refetchOnWindowFocus: false,
     retry: false,
   });
@@ -79,10 +82,21 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
   });
 
   const updateMutation = useMutation<Lead, Error, UpdateLeadParams>({
-    mutationFn: ({ id, data }) => leadsApi.updateLead(id, data),
-    onSuccess: () => {
+    mutationFn: async ({ id, data }) => {
+      console.log('Updating lead with data:', data);
+      const response = await leadsApi.updateLead(id, data);
+      console.log('Update response:', response);
+      return response;
+    },
+    onSuccess: (updatedLead, variables) => {
+      console.log('Update mutation success. Updated lead:', updatedLead);
+      console.log('Current query data:', queryClient.getQueryData(['leads', filters]));
+      
       queryClient.invalidateQueries({ queryKey: ['leads'] });
     },
+    onError: (error) => {
+      console.error('Update mutation error:', error);
+    }
   });
 
   const deleteMutation = useMutation({
@@ -118,7 +132,10 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     isLoading: query.isLoading,
     error: query.error as Error | null,
     createLead: createMutation.mutate,
-    updateLead: updateMutation.mutate,
+    updateLead: (params: UpdateLeadParams) => {
+      console.log('updateLead called with params:', params);
+      updateMutation.mutate(params);
+    },
     deleteLead: deleteMutation.mutate,
     exportLeads,
     isUpdating: updateMutation.isPending,

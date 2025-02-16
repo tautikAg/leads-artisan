@@ -65,6 +65,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     e.preventDefault()
     
     try {
+      console.log('EditLeadModal handleSubmit - Initial lead:', lead);
       const now = new Date().toISOString()
       const updateData: LeadUpdate = {
         name,
@@ -77,16 +78,19 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
 
       // If stage has changed, add stage history
       if (currentStage !== initialStage) {
+        console.log('Stage changed from', initialStage, 'to', currentStage);
+        console.log('Current stage history:', stageHistory);
         updateData.stage_history = stageHistory
         updateData.stage_updated_at = now
       }
 
+      console.log('Submitting update data:', updateData);
       await onSubmit(lead.id, updateData)
       showToast.success('Lead updated successfully')
       onClose()
     } catch (error) {
+      console.error('Error in EditLeadModal handleSubmit:', error);
       showToast.error('Failed to update lead')
-      console.error('Error updating lead:', error)
     }
   }
 

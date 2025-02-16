@@ -7,35 +7,56 @@
  * - Updating stage timestamps
  * - Maintaining history order
  */
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { StageHistoryItem, LeadStage } from '../types/lead'
+import { LEAD_STAGES } from '../constants/leads'
 
 interface UseStageHistoryReturn {
   stageHistory: StageHistoryItem[]
-  updateStageHistory: (fromStage: LeadStage | null, toStage: LeadStage) => void
+  updateStageHistory: (fromStage: LeadStage, toStage: LeadStage) => void
   editStageDate: (index: number, newDate: Date) => void
 }
 
 export function useStageHistory(initialHistory: StageHistoryItem[] = []): UseStageHistoryReturn {
   const [stageHistory, setStageHistory] = useState<StageHistoryItem[]>(initialHistory)
 
-  // Add new stage transition to history
-  const updateStageHistory = (fromStage: LeadStage | null, toStage: LeadStage) => {
+  // Update history when initialHistory changes, but only if it's different
+  useEffect(() => {
+    if (JSON.stringify(initialHistory) !== JSON.stringify(stageHistory)) {
+      setStageHistory(initialHistory)
+    }
+  }, [initialHistory])
+
+  const updateStageHistory = (fromStage: LeadStage, toStage: LeadStage) => {
+    // Get the indices to determine if we're moving forward or backward
+    const fromIndex = LEAD_STAGES.indexOf(fromStage)
+
     const newHistoryItem: StageHistoryItem = {
       from_stage: fromStage,
       to_stage: toStage,
-      changed_at: new Date().toISOString()
+      changed_at: new Date().toISOString(),
+      notes: `Updated from ${fromStage} to ${toStage}`
     }
-    setStageHistory(prev => [...prev, newHistoryItem])
+
+    // Create new history array with the direct transition
+    setStageHistory(prevHistory => {
+      // Get the base history (all items before the current stage)
+      const baseHistory = prevHistory.filter(item => 
+        LEAD_STAGES.indexOf(item.to_stage) <= fromIndex
+      )
+      
+      return [...baseHistory, newHistoryItem]
+    })
   }
 
-  // Update timestamp for existing history item
   const editStageDate = (index: number, newDate: Date) => {
     setStageHistory(prev => {
       const updated = [...prev]
-      updated[index] = {
-        ...updated[index],
-        changed_at: newDate.toISOString()
+      if (updated[index]) {
+        updated[index] = {
+          ...updated[index],
+          changed_at: newDate.toISOString()
+        }
       }
       return updated
     })
