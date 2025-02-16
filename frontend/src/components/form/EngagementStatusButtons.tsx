@@ -10,9 +10,14 @@ import { useEngagementStatus } from '../../hooks/useEngagementStatus'
 interface EngagementStatusButtonsProps {
   engaged: boolean
   onChange: (engaged: boolean) => void
+  disabled?: boolean
 }
 
-export default function EngagementStatusButtons({ engaged, onChange }: EngagementStatusButtonsProps) {
+export default function EngagementStatusButtons({ 
+  engaged, 
+  onChange,
+  disabled = false 
+}: EngagementStatusButtonsProps) {
   const { getStatusConfig } = useEngagementStatus(engaged)
 
   return (
@@ -25,7 +30,15 @@ export default function EngagementStatusButtons({ engaged, onChange }: Engagemen
               key={config.label}
               type="button"
               onClick={() => onChange(isEngaged)}
-              className={config.className}
+              disabled={disabled}
+              className={`
+                flex-1 px-4 py-3 rounded-lg transition-all
+                ${isEngaged === engaged
+                  ? 'bg-white shadow-md border-2 border-purple-600 text-purple-700'
+                  : 'bg-white/60 hover:bg-white hover:shadow-sm text-gray-600'
+                }
+                ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+              `}
             >
               <div className="flex flex-col items-center">
                 <span className="text-sm font-medium">{config.label}</span>

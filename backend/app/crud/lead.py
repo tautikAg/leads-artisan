@@ -191,23 +191,62 @@ class CRUDLead:
         """Handle stage transition logic and history updates"""
         curr_idx = self.STAGES.index(current_lead.current_stage)
         new_idx = self.STAGES.index(new_stage)
-        stage_history = current_lead.stage_history
+        
+        # If same stage, don't modify history
+        if curr_idx == new_idx:
+            return current_lead.stage_history
 
+        # When moving backwards, we need to preserve the original progression
+        # up to the new stage, and add the backward transition
         if new_idx < curr_idx:
-            # Moving backwards - truncate history
-            return [
-                stage for stage in stage_history
-                if self.STAGES.index(stage["to_stage"]) <= new_idx
-            ]
-        else:
-            # Moving forwards - add new transition
-            stage_history.append({
+            # Find the last occurrence of the target stage in history
+            target_stage_history = []
+            found_target = False
+            
+            for stage in current_lead.stage_history:
+                stage_idx = self.STAGES.index(stage["to_stage"])
+                
+                # Keep all stages up to where we first reached the target stage
+                if stage_idx <= new_idx or not found_target:
+                    target_stage_history.append(stage)
+                    
+                # Mark when we've found our target stage
+                if stage["to_stage"] == new_stage:
+                    found_target = True
+            
+            # Add the backward transition
+            target_stage_history.append({
                 "from_stage": current_lead.current_stage,
                 "to_stage": new_stage,
                 "changed_at": datetime.utcnow(),
                 "notes": f"Updated from {current_lead.current_stage} to {new_stage}"
             })
-            return stage_history
+            
+            return target_stage_history
+
+        # Moving forwards
+        base_history = current_lead.stage_history.copy()
+        
+        # Add any missing intermediate stages
+        if new_idx > curr_idx:
+            for i in range(curr_idx + 1, new_idx):
+                intermediate_stage = self.STAGES[i]
+                base_history.append({
+                    "from_stage": self.STAGES[i-1],
+                    "to_stage": intermediate_stage,
+                    "changed_at": datetime.utcnow(),
+                    "notes": f"Intermediate stage between {current_lead.current_stage} and {new_stage}"
+                })
+            
+            # Add the final transition
+            base_history.append({
+                "from_stage": current_lead.current_stage,
+                "to_stage": new_stage,
+                "changed_at": datetime.utcnow(),
+                "notes": f"Updated from {current_lead.current_stage} to {new_stage}"
+            })
+
+        return base_history
 
     async def delete(self, lead_id: str) -> Optional[Lead]:
         """Delete a lead"""
