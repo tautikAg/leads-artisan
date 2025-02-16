@@ -87,6 +87,17 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     mutationFn: (newLead: LeadCreate) => leadsApi.createLead(newLead),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      showToast.success('Lead added successfully');
+    },
+    onError: (error: any) => {
+      // Handle specific error cases
+      if (error.response?.status === 409) {
+        showToast.error('A lead with this email already exists');
+      } else if (error.response?.data?.detail) {
+        showToast.error(error.response.data.detail);
+      } else {
+        showToast.error('Failed to create lead');
+      }
     },
   });
 

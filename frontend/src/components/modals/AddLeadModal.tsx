@@ -8,7 +8,6 @@ import StageStep from '../progress/StageStep'
 import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
-import { showToast } from '../../utils/toast'
 
 interface AddLeadModalProps {
   isOpen: boolean
@@ -55,16 +54,15 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
         name,
         email,
         company,
-        current_stage: currentStage,
-        status: engaged ? "Engaged" : "Not Engaged",
         engaged,
+        current_stage: currentStage,
         last_contacted: lastContacted.toISOString()
       })
-      showToast.success('Lead added successfully')
+      // Just close the modal, let the mutation handle the success message
       onClose()
     } catch (error) {
-      showToast.error('Failed to add lead')
-      console.error('Error adding lead:', error)
+      // Error handling is done by the mutation
+      console.error('Error submitting form:', error)
     }
   }
 
