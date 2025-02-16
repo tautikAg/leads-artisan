@@ -1,5 +1,3 @@
-import { LeadStage } from '../types/lead'
-
 export { LEAD_STAGES } from './stages'
 
 export const ENGAGEMENT_STATUSES = {

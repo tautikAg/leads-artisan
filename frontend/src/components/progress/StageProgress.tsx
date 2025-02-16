@@ -6,7 +6,7 @@
  * in purple, while upcoming stages are shown in gray.
  */
 import { LeadStage } from '../../types/lead'
-import { LEAD_STAGES, calculateProgress } from '../../constants/stages'
+import { LEAD_STAGES } from '../../constants/leads'
 
 interface StageProgressProps {
   currentStage: LeadStage

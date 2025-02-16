@@ -8,6 +8,8 @@ import StageStep from '../progress/StageStep'
 import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
+import { useState } from 'react'
+import { validateEmail } from '../../utils/validators'
 
 interface AddLeadModalProps {
   isOpen: boolean
@@ -29,6 +31,7 @@ interface AddLeadModalProps {
  * Handles form state and validation for creating lead records.
  */
 export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: AddLeadModalProps) {
+  const [emailError, setEmailError] = useState<string>('')
   // Use custom hook to manage form state and validation
   const {
     name,
@@ -45,9 +48,19 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
     setLastContacted,
   } = useLeadForm()
 
+  const handleEmailValidation = (email: string): boolean => {
+    const { isValid, error } = validateEmail(email)
+    setEmailError(error || '')
+    return isValid
+  }
+
   // Handle form submission and data validation
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!handleEmailValidation(email)) {
+      return
+    }
     
     try {
       await onSubmit({
@@ -64,6 +77,14 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
     } catch (error) {
       // Error handling is done by the mutation
       console.error('Error submitting form:', error)
+    }
+  }
+
+  // Email change handler
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+    if (emailError) {
+      handleEmailValidation(e.target.value)
     }
   }
 
@@ -104,14 +125,23 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                   required
                 />
 
-                <FormInput
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  placeholder="john@example.com"
-                  required
-                />
+                <div>
+                  <FormInput
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={handleEmailChange}
+                    placeholder="john@example.com"
+                    required
+                    error={emailError}
+                    className={emailError ? 'border-red-300' : ''}
+                  />
+                  {emailError && (
+                    <p className="mt-1 text-sm text-red-600">
+                      {emailError}
+                    </p>
+                  )}
+                </div>
 
                 <FormInput
                   label="Company"

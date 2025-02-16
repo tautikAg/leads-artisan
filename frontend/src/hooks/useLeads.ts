@@ -85,13 +85,24 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     mutationFn: (newLead: LeadCreate) => leadsApi.createLead(newLead),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
+      showToast.success('Lead created successfully');
     },
     onError: (error: any) => {
-      // Handle specific error cases
       if (error.response?.status === 409) {
         showToast.error('A lead with this email already exists');
       } else if (error.response?.data?.detail) {
-        showToast.error(error.response.data.detail);
+        if (Array.isArray(error.response.data.detail)) {
+          const emailError = error.response.data.detail.find(
+            (err: any) => err.loc.includes('email')
+          )
+          if (emailError) {
+            showToast.error(emailError.msg);
+          } else {
+            showToast.error('Please check your input and try again');
+          }
+        } else {
+          showToast.error(error.response.data.detail);
+        }
       } else {
         showToast.error('Failed to create lead');
       }
