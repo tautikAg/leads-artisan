@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { Lead } from '../types/lead'
 import LeadList from '../components/leads/LeadList'
 import { leadsApi } from '../api/leads'
+import { SortDirection } from '../types/common'
 
 const Leads: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([])
@@ -10,6 +11,13 @@ const Leads: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [totalPages, setTotalPages] = useState(1)
+  const [currentSort, setCurrentSort] = useState<{
+    field: string;
+    direction: SortDirection;
+  }>({
+    field: 'created_at',
+    direction: 'desc'
+  });
 
   const fetchLeads = async () => {
     try {
@@ -60,6 +68,11 @@ const Leads: React.FC = () => {
     }
   }
 
+  const handleSort = (field: string, direction: SortDirection) => {
+    setCurrentSort({ field, direction });
+    // Add your sorting logic here
+  };
+
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <LeadList
@@ -75,6 +88,8 @@ const Leads: React.FC = () => {
         onAddLead={() => {/* Add lead logic */}}
         onExportAll={leadsApi.exportLeads}
         onDeleteLead={handleDeleteLead}
+        onSort={handleSort}
+        currentSort={currentSort}
       />
     </div>
   )

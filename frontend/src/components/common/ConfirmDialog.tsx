@@ -8,7 +8,7 @@ interface ConfirmDialogProps {
   title: string
   description: string
   confirmText: string
-  cancelText: string
+  cancelText?: string
   isLoading?: boolean
 }
 

@@ -108,16 +108,21 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     }
   }
 
-  const handleEditSubmit = async (id: string, data: LeadUpdate) => {
+  const handleEditSubmitAsync = async (data: LeadUpdate) => {
     try {
-      console.log('Submitting edit for lead:', id, data)
-      await updateLead({ id, data })
+      console.log('Submitting edit for lead:', lead.id, data)
+      await updateLead({ id: lead.id, data })
       setShowEditModal(false)
       console.log('Edit submitted successfully')
     } catch (error) {
       console.error('Failed to update lead:', error)
-      // You might want to show an error toast here
     }
+  }
+
+  const handleEditSubmit = (id: string, data: LeadUpdate) => {
+    handleEditSubmitAsync(data).catch(error => {
+      console.error('Error in handleEditSubmit:', error)
+    })
   }
 
   if (isMobile) {
@@ -215,7 +220,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
               console.log('Closing edit modal')
               setShowEditModal(false)
             }}
-            onSubmit={(data) => handleEditSubmit(lead.id, data)}
+            onSubmit={handleEditSubmit}
             isLoading={false}
           />
 
@@ -326,9 +331,9 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
         }}
         onConfirm={handleDeleteConfirm}
         title="Delete Lead"
-        message={`Are you sure you want to delete ${lead.name}? This action cannot be undone.`}
+        description={`Are you sure you want to delete ${lead.name}? This action cannot be undone.`}
         confirmText="Delete"
-        confirmVariant="danger"
+        cancelText="Cancel"
       />
 
       <EditLeadModal
@@ -338,7 +343,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           console.log('Closing edit modal')
           setShowEditModal(false)
         }}
-        onSubmit={(data) => handleEditSubmit(lead.id, data)}
+        onSubmit={handleEditSubmit}
         isLoading={false}
       />
 
