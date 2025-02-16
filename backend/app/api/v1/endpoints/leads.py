@@ -1,13 +1,8 @@
 from typing import Any, List, Optional
 from fastapi import APIRouter, HTTPException, Query, status, Response
 from app.crud.lead import lead
-from app.models.lead import (
-    Lead, 
-    LeadCreate, 
-    LeadUpdate, 
-    LeadPaginatedResponse,
-    SortField
-)
+from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
+from app.models.enums import Stage, SortField, EngagementStatus
 from app.core.exceptions import (
     LeadNotFoundException,
     DuplicateLeadException,
@@ -29,7 +24,7 @@ async def get_leads(
     response: Response,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
-    sort_by: SortField = Query(SortField.created_at, description="Sort field"),
+    sort_by: SortField = Query(SortField.CREATED_AT, description="Sort field"),
     sort_desc: bool = Query(True, description="Sort descending"),
     search: Optional[str] = Query(None, min_length=1, description="Search term")
 ) -> LeadPaginatedResponse:

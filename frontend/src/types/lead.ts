@@ -1,11 +1,5 @@
-export type LeadStage = 
-  | "New Lead"
-  | "Initial Contact"
-  | "Meeting Scheduled"
-  | "Proposal Sent"
-  | "Negotiation"
-  | "Closed Won"
-  | "Closed Lost"
+import { LeadStage } from '../constants/stages'
+export type { LeadStage }
 
 export interface StageHistory {
   from_stage: LeadStage | null

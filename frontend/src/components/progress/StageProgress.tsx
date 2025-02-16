@@ -6,26 +6,18 @@
  * in purple, while upcoming stages are shown in gray.
  */
 import { LeadStage } from '../../types/lead'
-
-const STAGES: LeadStage[] = [
-  "New Lead",
-  "Initial Contact",
-  "Meeting Scheduled",
-  "Proposal Sent",
-  "Negotiation",
-  "Closed Won"
-]
+import { LEAD_STAGES, calculateProgress } from '../../constants/stages'
 
 interface StageProgressProps {
   currentStage: LeadStage
 }
 
 export default function StageProgress({ currentStage }: StageProgressProps) {
-  const currentIndex = STAGES.indexOf(currentStage)
+  const currentIndex = LEAD_STAGES.indexOf(currentStage)
   
   return (
     <div className="flex gap-0.5">
-      {STAGES.map((stage, index) => (
+      {LEAD_STAGES.map((stage, index) => (
         <div 
           key={stage}
           className={`h-5 w-1 rounded-sm ${

@@ -1,27 +1,7 @@
 from datetime import datetime
-from typing import Optional, List, Generic, TypeVar, Literal
+from typing import Optional, List, Generic, TypeVar
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from enum import Enum
-
-# Define possible stages as Literal type
-LeadStage = Literal[
-    "New Lead",
-    "Initial Contact",
-    "Meeting Scheduled",
-    "Proposal Sent",
-    "Negotiation",
-    "Closed Won",
-    "Closed Lost"
-]
-
-# Add SortField enum
-class SortField(str, Enum):
-    """Enum for lead sorting fields"""
-    name = "name"
-    company = "company"
-    current_stage = "current_stage"
-    last_contacted = "last_contacted"
-    created_at = "created_at"
+from app.models.enums import Stage, SortField, EngagementStatus
 
 class LeadBase(BaseModel):
     """
@@ -45,7 +25,7 @@ class LeadBase(BaseModel):
         description="Company name of the lead"
     )
     status: str = Field(
-        default="Not Engaged", 
+        default=EngagementStatus.NOT_ENGAGED.value,
         max_length=50,
         description="Current status of the lead"
     )
@@ -53,8 +33,8 @@ class LeadBase(BaseModel):
         default=False,
         description="Whether the lead is currently engaged"
     )
-    current_stage: LeadStage = Field(
-        default="New Lead",
+    current_stage: str = Field(
+        default=Stage.NEW_LEAD.value,
         description="Current stage of the lead in the pipeline"
     )
     stage_updated_at: Optional[datetime] = Field(
@@ -79,10 +59,9 @@ class Lead(LeadBase):
     # Add computed property for stage progress
     @property
     def stage_progress(self) -> dict:
-        stages = ["New Lead", "Initial Contact", "Meeting Scheduled", 
-                 "Proposal Sent", "Negotiation", "Closed Won", "Closed Lost"]
+        stages = Stage.list()
         current_index = stages.index(self.current_stage)
-        total_stages = len(stages) - 1  # Exclude Closed Lost from progress
+        total_stages = len(stages) - 1
         return {
             "current_stage": self.current_stage,
             "current_index": current_index,
@@ -107,7 +86,7 @@ class LeadUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[EmailStr] = None
     company: Optional[str] = None
-    current_stage: Optional[LeadStage] = None
+    current_stage: Optional[str] = None
     engaged: Optional[bool] = None
     last_contacted: Optional[datetime] = None
     status: Optional[str] = None
@@ -116,8 +95,8 @@ class StageChange(BaseModel):
     """
     Model for recording stage changes
     """
-    from_stage: LeadStage
-    to_stage: LeadStage
+    from_stage: str
+    to_stage: str
     changed_at: datetime = Field(default_factory=datetime.utcnow)
     notes: Optional[str] = None
 
