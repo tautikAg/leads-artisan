@@ -10,6 +10,7 @@ import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
 import LeadDetailsSheet from './LeadDetailsSheet'
 import { Menu, Transition } from '@headlessui/react'
+import LoadingSpinner from '../common/LoadingSpinner'
 
 interface LeadTableProps {
   initialLeads: Lead[]
@@ -373,7 +374,9 @@ export default function LeadTable({
 
       {/* Mobile List View */}
       <div className="block sm:hidden mt-4">
-        {Array.isArray(leads) && leads.length > 0 ? (
+        {isLoading ? (
+          <LoadingSpinner text="Loading leads..." />
+        ) : Array.isArray(leads) && leads.length > 0 ? (
           <div className="space-y-2 px-4">
             {leads.map((lead) => (
               <div key={lead.id} className="bg-white rounded-lg border border-gray-200">
@@ -388,7 +391,7 @@ export default function LeadTable({
           </div>
         ) : (
           <div className="px-4 py-8 text-center text-gray-500">
-            {isLoading ? 'Loading...' : 'No leads found'}
+            No leads found
           </div>
         )}
       </div>
@@ -397,9 +400,9 @@ export default function LeadTable({
       <div className="hidden sm:block">
         <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
-            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+            <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 rounded-lg">
               <table className="min-w-full divide-y divide-gray-300">
-                <thead>
+                <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="relative w-8 py-3 pl-6">
                       <input
@@ -430,7 +433,13 @@ export default function LeadTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {Array.isArray(leads) && leads.length > 0 ? (
+                  {isLoading ? (
+                    <tr>
+                      <td colSpan={7}>
+                        <LoadingSpinner text="Loading leads..." />
+                      </td>
+                    </tr>
+                  ) : Array.isArray(leads) && leads.length > 0 ? (
                     leads.map((lead) => (
                       <LeadItem
                         key={lead.id}
@@ -453,7 +462,7 @@ export default function LeadTable({
                   ) : (
                     <tr>
                       <td colSpan={7} className="py-4 text-center text-gray-500">
-                        {isLoading ? 'Loading...' : 'No leads found'}
+                        No leads found
                       </td>
                     </tr>
                   )}
