@@ -3,21 +3,18 @@ import { Lead } from '../../types/lead'
 import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format, parseISO } from 'date-fns'
-import { Edit2, Mail, Phone, Building2, Calendar, Save, X } from 'lucide-react'
+import { Edit2, Mail, Building2, Calendar, Save, X } from 'lucide-react'
 import EditLeadModal from './EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
+import StageHistoryTimeline from './StageHistoryTimeline'
+import { useStageHistory } from '../../hooks/useStageHistory'
 
 interface LeadDetailsSheetProps {
   lead: Lead | null
   isOpen: boolean
   onClose: () => void
-}
-
-interface EditingStage {
-  index: number;
-  date: Date | null;
 }
 
 interface StageHistoryItemProps {
@@ -142,14 +139,7 @@ const StageHistoryItem = ({
 export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsSheetProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const { updateLead, isUpdating } = useLeads({ page: 1 })
-  const [editingStage, setEditingStage] = useState<EditingStage | null>(null)
-  const [stageHistory, setStageHistory] = useState<StageHistoryItem[]>([])
-
-  useEffect(() => {
-    if (lead) {
-      setStageHistory(lead.stage_history)
-    }
-  }, [lead])
+  const { stageHistory, editStageDate } = useStageHistory(lead?.stage_history || [])
 
   useEffect(() => {
     const handleCloseSheet = () => onClose()
@@ -168,7 +158,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
     }
   }
 
-  const handleEditSubmit = async (id: string, data: any) => {
+  const handleEditSubmit = async (id: string, data: LeadUpdate) => {
     try {
       await updateLead({ id, data })
       setShowEditModal(false)
@@ -177,20 +167,15 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
     }
   }
 
-  const handleSaveStageDate = async (index: number) => {
-    if (!editingStage || !lead) return
-
-    const newHistory = [...stageHistory]
-    const newChangedAt = editingStage.date?.toISOString() || new Date().toISOString()
-    
-    newHistory[index] = {
-      ...newHistory[index],
-      changed_at: newChangedAt
-    }
+  const handleSaveStageDate = async (index: number, newDate: Date) => {
+    if (!lead) return
 
     try {
+      editStageDate(index, newDate)
+      const newChangedAt = newDate.toISOString()
+      
       // If we're updating the latest stage, update stage_updated_at
-      const isLatestStage = index === newHistory.length - 1
+      const isLatestStage = index === stageHistory.length - 1
       
       const updateData: LeadUpdate = {
         name: lead.name,
@@ -200,8 +185,7 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
         engaged: lead.engaged,
         last_contacted: lead.last_contacted,
         status: lead.status,
-        stage_history: newHistory,
-        // Set stage_updated_at only if we're updating the latest stage
+        stage_history: stageHistory,
         stage_updated_at: isLatestStage ? newChangedAt : lead.stage_updated_at
       }
 
@@ -209,17 +193,9 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
         id: lead.id, 
         data: updateData
       })
-      
-      setStageHistory(newHistory)
-      setEditingStage(null)
     } catch (error) {
       console.error('Failed to update stage date:', error)
     }
-  }
-
-  const handleCancelEdit = () => {
-    setEditingStage(null)
-    setStageHistory(lead.stage_history) // Reset to original
   }
 
   return (
@@ -268,31 +244,12 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
 
             {/* Stage History */}
             <div className="mb-6">
-              <h3 className="text-sm font-medium text-gray-900">Stage History</h3>
-              <div className="mt-4 flow-root">
-                <ul className="-mb-8">
-                  {stageHistory.map((stage, stageIdx) => (
-                    <li key={`${stage.to_stage}-${stageIdx}`}>
-                      <StageHistoryItem
-                        stage={stage}
-                        stageIdx={stageIdx}
-                        isLast={stageIdx === stageHistory.length - 1}
-                        isEditing={editingStage?.index === stageIdx}
-                        onEdit={() => setEditingStage({ 
-                          index: stageIdx, 
-                          date: stage.changed_at ? new Date(stage.changed_at) : null 
-                        })}
-                        onSave={() => handleSaveStageDate(stageIdx)}
-                        onCancel={handleCancelEdit}
-                        editDate={editingStage?.date ?? null}
-                        onDateChange={(date) => setEditingStage({ index: stageIdx, date })}
-                        isUpdating={isUpdating}
-                        formatDate={formatDateTime}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <h3 className="text-sm font-medium text-gray-900 mb-4">Stage History</h3>
+              <StageHistoryTimeline
+                history={stageHistory}
+                onEditDate={handleSaveStageDate}
+                isUpdating={isUpdating}
+              />
             </div>
 
             {/* Additional Details */}

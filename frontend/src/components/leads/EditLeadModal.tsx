@@ -3,6 +3,7 @@ import { X, CheckCircle2 } from 'lucide-react'
 import { Lead, LeadStage, LeadUpdate } from '../../types/lead'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
+import { useStageHistory } from '../../hooks/useStageHistory'
 
 interface EditLeadModalProps {
   lead: Lead
@@ -97,6 +98,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
   const [currentStage, setCurrentStage] = useState<LeadStage>(lead.current_stage)
   const [engaged, setEngaged] = useState(lead.engaged)
   const [lastContacted, setLastContacted] = useState<Date>(new Date(lead.last_contacted))
+  const { stageHistory, updateStageHistory } = useStageHistory(lead.stage_history)
   const [initialStage] = useState<LeadStage>(lead.current_stage)
 
   // Update form when lead changes
@@ -108,6 +110,11 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     setEngaged(lead.engaged)
     setLastContacted(new Date(lead.last_contacted))
   }, [lead])
+
+  const handleStageChange = (newStage: LeadStage) => {
+    setCurrentStage(newStage)
+    updateStageHistory(currentStage, newStage)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -122,12 +129,9 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
       last_contacted: lastContacted.toISOString()
     }
 
-    // If stage has changed, add stage history and update stage_updated_at
+    // If stage has changed, add stage history
     if (currentStage !== initialStage) {
-      updateData.stage_history = [
-        ...(lead.stage_history || []),
-        createStageHistoryItem(initialStage, currentStage)
-      ]
+      updateData.stage_history = stageHistory
       updateData.stage_updated_at = now
     }
 
@@ -241,7 +245,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
                             stage={stage}
                             isActive={isActive}
                             isCompleted={isCompleted}
-                            onClick={() => setCurrentStage(stage)}
+                            onClick={() => handleStageChange(stage)}
                           />
                         )
                       })}
