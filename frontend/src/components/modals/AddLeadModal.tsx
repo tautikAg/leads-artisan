@@ -8,6 +8,7 @@ import StageStep from '../progress/StageStep'
 import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
+import { showToast } from '../../utils/toast'
 
 interface AddLeadModalProps {
   isOpen: boolean
@@ -46,18 +47,25 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
   } = useLeadForm()
 
   // Handle form submission and data validation
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Transform form data into lead record format
-    onSubmit({
-      name,
-      email,
-      company,
-      current_stage: currentStage,
-      status: engaged ? "Engaged" : "Not Engaged",
-      engaged,
-      last_contacted: lastContacted.toISOString()
-    })
+    
+    try {
+      await onSubmit({
+        name,
+        email,
+        company,
+        current_stage: currentStage,
+        status: engaged ? "Engaged" : "Not Engaged",
+        engaged,
+        last_contacted: lastContacted.toISOString()
+      })
+      showToast.success('Lead added successfully')
+      onClose()
+    } catch (error) {
+      showToast.error('Failed to add lead')
+      console.error('Error adding lead:', error)
+    }
   }
 
   // Don't render if modal is not open
@@ -120,13 +128,22 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Last Contacted
                 </label>
-                <DatePicker
-                  selected={lastContacted}
-                  onChange={(date) => setLastContacted(date || new Date())}
-                  showTimeSelect
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-50 focus:ring-4 transition-all outline-none"
-                />
+                <div className="relative">
+                  <DatePicker
+                    selected={lastContacted}
+                    onChange={(date) => setLastContacted(date || new Date())}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    dateFormat="MMMM d, yyyy HH:mm"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 
+                      focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
+                      transition-all outline-none text-sm text-gray-900
+                      bg-white shadow-sm min-w-[12rem]"
+                    popperPlacement="bottom-start"
+                    calendarClassName="shadow-lg rounded-lg border-gray-200"
+                  />
+                </div>
               </div>
 
               {/* Stage Selection */}

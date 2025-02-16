@@ -10,6 +10,7 @@ import StageStep from '../progress/StageStep'
 import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
+import { showToast } from '../../utils/toast'
 
 interface EditLeadModalProps {
   lead: Lead
@@ -60,26 +61,33 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     updateStageHistory(currentStage, newStage)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const now = new Date().toISOString()
-    const updateData: LeadUpdate = {
-      name,
-      email,
-      company,
-      current_stage: currentStage,
-      engaged,
-      last_contacted: lastContacted.toISOString()
-    }
+    try {
+      const now = new Date().toISOString()
+      const updateData: LeadUpdate = {
+        name,
+        email,
+        company,
+        current_stage: currentStage,
+        engaged,
+        last_contacted: lastContacted.toISOString()
+      }
 
-    // If stage has changed, add stage history
-    if (currentStage !== initialStage) {
-      updateData.stage_history = stageHistory
-      updateData.stage_updated_at = now
-    }
+      // If stage has changed, add stage history
+      if (currentStage !== initialStage) {
+        updateData.stage_history = stageHistory
+        updateData.stage_updated_at = now
+      }
 
-    onSubmit(lead.id, updateData)
+      await onSubmit(lead.id, updateData)
+      showToast.success('Lead updated successfully')
+      onClose()
+    } catch (error) {
+      showToast.error('Failed to update lead')
+      console.error('Error updating lead:', error)
+    }
   }
 
   if (!isOpen) return null
@@ -141,13 +149,22 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
                 <label className="block text-sm font-medium text-gray-700 mb-3">
                   Last Contacted
                 </label>
-                <DatePicker
-                  selected={lastContacted}
-                  onChange={(date) => setLastContacted(date || new Date())}
-                  showTimeSelect
-                  dateFormat="MMMM d, yyyy h:mm aa"
-                  className="w-full px-4 py-3 rounded-lg border-2 border-gray-200 focus:border-purple-400 focus:ring-purple-50 focus:ring-4 transition-all outline-none"
-                />
+                <div className="relative">
+                  <DatePicker
+                    selected={lastContacted}
+                    onChange={(date) => setLastContacted(date || new Date())}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={30}
+                    dateFormat="MMMM d, yyyy HH:mm"
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-200 
+                      focus:border-purple-400 focus:ring-purple-50 focus:ring-4 
+                      transition-all outline-none text-sm text-gray-900
+                      bg-white shadow-sm min-w-[12rem]"
+                    popperPlacement="bottom-start"
+                    calendarClassName="shadow-lg rounded-lg border-gray-200"
+                  />
+                </div>
               </div>
 
               {/* Stage Selection */}
