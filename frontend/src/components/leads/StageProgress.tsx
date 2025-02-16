@@ -1,4 +1,4 @@
-import { LeadStage } from '@/types/lead'
+import { LeadStage } from '../../types/lead'
 
 const STAGES: LeadStage[] = [
   "New Lead",

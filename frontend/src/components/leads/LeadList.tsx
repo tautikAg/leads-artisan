@@ -8,7 +8,6 @@ import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical, Edit2, T
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
-import StageProgress from './StageProgress'
 import LeadDetailsSheet from './LeadDetailsSheet'
 import { Menu, Transition } from '@headlessui/react'
 

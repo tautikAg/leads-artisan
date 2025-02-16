@@ -85,12 +85,6 @@ const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputEleme
   </div>
 )
 
-const createStageHistoryItem = (fromStage: LeadStage | null, toStage: LeadStage) => ({
-  from_stage: fromStage,
-  to_stage: toStage,
-  changed_at: new Date().toISOString()
-});
-
 export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoading }: EditLeadModalProps) {
   const [name, setName] = useState(lead.name)
   const [email, setEmail] = useState(lead.email)
