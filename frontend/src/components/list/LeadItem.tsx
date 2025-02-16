@@ -1,6 +1,6 @@
 import { format } from 'date-fns'
 import { Lead, LeadUpdate } from '../../types/lead'
-import { MoreHorizontal, Trash2, Edit2, ChevronRight } from 'lucide-react'
+import { Trash2, Edit2, ChevronRight, MoreVertical, Clock, CheckCircle } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import ConfirmDialog from '../common/ConfirmDialog'
 import StageProgress from '../progress/StageProgress'
@@ -13,13 +13,15 @@ interface LeadItemProps {
   onDelete: (id: string) => void
   onUpdate: (lead: Lead) => void
   isMobile: boolean
+  isSelected?: boolean
+  onSelectChange?: (checked: boolean) => void
 }
 
 /**
  * Individual lead item component that renders in both mobile and desktop views.
  * Handles lead actions like edit, delete, and viewing details.
  */
-export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadItemProps) {
+export default function LeadItem({ lead, onDelete, onUpdate, isMobile, isSelected, onSelectChange }: LeadItemProps) {
   // UI state management
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -111,7 +113,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
                 }}
                 className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               >
-                <MoreHorizontal className="h-5 w-5 text-gray-400" />
+                <MoreVertical className="h-5 w-5 text-gray-400" />
               </button>
 
               {showMenu && (
@@ -141,9 +143,16 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
               <StageProgress currentStage={lead.current_stage} />
             </div>
             <span className={`
-              inline-flex rounded-full px-2 text-xs font-medium leading-5
-              ${lead.engaged ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-            `}>
+              inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
+              ${lead.engaged 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700'
+              }`
+            }>
+              {lead.engaged 
+                ? <CheckCircle className="h-3.5 w-3.5" /> 
+                : <Clock className="h-3.5 w-3.5" />
+              }
               {lead.status}
             </span>
           </div>
@@ -203,6 +212,8 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           <input 
             type="checkbox" 
             className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            checked={isSelected}
+            onChange={(e) => onSelectChange?.(e.target.checked)}
           />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
@@ -225,11 +236,17 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           <StageProgress currentStage={lead.current_stage} />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
-          <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-            lead.engaged
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`
+            inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
+            ${lead.engaged
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-700'
+            }`
+          }>
+            {lead.engaged 
+              ? <CheckCircle className="h-3.5 w-3.5" /> 
+              : <Clock className="h-3.5 w-3.5" />
+            }
             {lead.status}
           </span>
         </td>
@@ -248,7 +265,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
               }}
               className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             >
-              <MoreHorizontal className="h-5 w-5 text-gray-400" />
+              <MoreVertical className="h-5 w-5 text-gray-400" />
             </button>
 
             {showMenu && (

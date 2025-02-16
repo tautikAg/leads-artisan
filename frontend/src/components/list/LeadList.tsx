@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical, Edit2, Trash2 } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
@@ -155,6 +155,7 @@ export default function LeadList({
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [showMobileMenu, setShowMobileMenu] = useState<string | null>(null)
+  const [selectedLeads, setSelectedLeads] = useState<Set<string>>(new Set())
 
   // Debounce search to prevent excessive API calls
   const debouncedSearch = useMemo(
@@ -252,6 +253,17 @@ export default function LeadList({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMobileMenu]);
 
+  // Add handler for select all
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      // Select all visible leads
+      setSelectedLeads(new Set(leads.map(lead => lead.id)))
+    } else {
+      // Deselect all
+      setSelectedLeads(new Set())
+    }
+  }
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -287,7 +299,7 @@ export default function LeadList({
           <div className="sm:hidden absolute right-4 top-4 z-30">
             <Menu as="div" className="relative">
               <Menu.Button className="p-2 hover:bg-gray-50 rounded-full">
-                <MoreVertical className="h-5 w-5 text-gray-400" />
+                <MoreHorizontal className="h-5 w-5 text-gray-400" />
               </Menu.Button>
 
               <Transition
@@ -389,8 +401,13 @@ export default function LeadList({
               <table className="min-w-full divide-y divide-gray-300">
                 <thead>
                   <tr>
-                    <th scope="col" className="w-8 py-3 pl-6">
-                      <input type="checkbox" className="rounded border-gray-300 text-purple-600 focus:ring-purple-500" />
+                    <th scope="col" className="relative w-8 py-3 pl-6">
+                      <input
+                        type="checkbox"
+                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        checked={selectedLeads.size === leads.length && leads.length > 0}
+                        onChange={handleSelectAll}
+                      />
                     </th>
                     <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Name
@@ -415,12 +432,22 @@ export default function LeadList({
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {Array.isArray(leads) && leads.length > 0 ? (
                     leads.map((lead) => (
-                      <LeadItem 
-                        key={lead.id} 
-                        lead={lead} 
+                      <LeadItem
+                        key={lead.id}
+                        lead={lead}
                         onDelete={onDeleteLead}
                         onUpdate={handleLeadUpdate}
                         isMobile={false}
+                        isSelected={selectedLeads.has(lead.id)}
+                        onSelectChange={(checked) => {
+                          const newSelected = new Set(selectedLeads)
+                          if (checked) {
+                            newSelected.add(lead.id)
+                          } else {
+                            newSelected.delete(lead.id)
+                          }
+                          setSelectedLeads(newSelected)
+                        }}
                       />
                     ))
                   ) : (
