@@ -1,4 +1,11 @@
-import { LeadStage } from '@/types/lead'
+/**
+ * StageProgress Component
+ * 
+ * A minimal progress indicator that shows the current stage of a lead
+ * using a series of vertical bars. Completed stages are highlighted
+ * in purple, while upcoming stages are shown in gray.
+ */
+import { LeadStage } from '../../types/lead'
 
 const STAGES: LeadStage[] = [
   "New Lead",

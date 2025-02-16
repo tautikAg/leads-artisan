@@ -1,13 +1,25 @@
-import React, { useState, useCallback, useEffect } from 'react'
+/**
+ * LeadsPage Component
+ * 
+ * Main page component for lead management.
+ * Handles:
+ * - Lead data fetching and state management
+ * - CRUD operations for leads
+ * - Filtering and pagination
+ * - Modal interactions
+ */
+import React, { useState } from 'react'
 import { useLeads } from '../hooks/useLeads'
-import { LeadFilters, Lead } from '../types/lead'
-import LeadList from '../components/leads/LeadList'
-import AddLeadModal from '../components/leads/AddLeadModal'
+import { LeadFilters } from '../types/lead'
+import LeadTable from '../components/list/LeadTable'
+import AddLeadModal from '../components/modals/AddLeadModal'
 import { showToast } from '../utils/toast'
-import { leadsApi } from '../api/leads'
 
 const LeadsPage: React.FC = () => {
+  // Modal state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  
+  // Filter state management
   const [filters, setFilters] = useState<LeadFilters>({
     page: 1,
     limit: 10,
@@ -16,6 +28,7 @@ const LeadsPage: React.FC = () => {
     search: ''
   })
 
+  // Get lead data and operations from hook
   const { 
     leads = [],
     totalLeads = 0,
@@ -34,27 +47,13 @@ const LeadsPage: React.FC = () => {
     sort
   } = useLeads(filters)
 
-  const handleSearch = useCallback((searchTerm: string) => {
-    setFilters(prev => ({ 
-      ...prev, 
-      search: searchTerm, 
-      page: 1 
-    }))
-  }, [])
-
-  const handlePageChange = (page: number) => {
-    setFilters(prev => ({ ...prev, page }))
-  }
-
-  const handlePageSizeChange = (pageSize: number) => {
-    setFilters(prev => ({ ...prev, limit: pageSize, page: 1 }))
-  }
 
   const handleDeleteLead = async (id: string) => {
     try {
       await deleteLead(id)
       showToast.success('Lead deleted successfully')
       
+      // Handle pagination when deleting last item on page
       if (leads.length === 1 && currentPage > 1) {
         setFilters(prev => ({ 
           ...prev, 
@@ -72,7 +71,7 @@ const LeadsPage: React.FC = () => {
       {error ? (
         <div className="text-red-500">Error loading leads</div>
       ) : (
-        <LeadList 
+        <LeadTable 
           initialLeads={leads}
           isLoading={isLoading}
           totalLeads={totalLeads}

@@ -1,11 +1,11 @@
 import { format } from 'date-fns'
 import { Lead, LeadUpdate } from '../../types/lead'
-import { MoreHorizontal, Trash2, Edit2, ChevronRight } from 'lucide-react'
+import { Trash2, Edit2, ChevronRight, MoreVertical, Clock, CheckCircle } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import ConfirmDialog from '../common/ConfirmDialog'
-import StageProgress from './StageProgress'
+import StageProgress from '../progress/StageProgress'
 import LeadDetailsSheet from './LeadDetailsSheet'
-import EditLeadModal from './EditLeadModal'
+import EditLeadModal from '../modals/EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
 
 interface LeadItemProps {
@@ -13,30 +13,25 @@ interface LeadItemProps {
   onDelete: (id: string) => void
   onUpdate: (lead: Lead) => void
   isMobile: boolean
+  isSelected?: boolean
+  onSelectChange?: (checked: boolean) => void
 }
 
-export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadItemProps) {
+/**
+ * Individual lead item component that renders in both mobile and desktop views.
+ * Handles lead actions like edit, delete, and viewing details.
+ */
+export default function LeadItem({ lead, onDelete, onUpdate, isMobile, isSelected, onSelectChange }: LeadItemProps) {
+  // UI state management
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
+  
   const menuRef = useRef<HTMLDivElement>(null)
   const { updateLead } = useLeads({ page: 1 })
 
-  // Add debug logs for state changes
-  useEffect(() => {
-    console.log('Menu state changed:', showMenu)
-  }, [showMenu])
-
-  useEffect(() => {
-    console.log('Edit modal state changed:', showEditModal)
-  }, [showEditModal])
-
-  useEffect(() => {
-    console.log('Delete confirm state changed:', showDeleteConfirm)
-  }, [showDeleteConfirm])
-
-  // Close menu when clicking outside
+  // Close dropdown menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -48,16 +43,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Don't open details if clicking the checkbox or menu
-    if (
-      !menuRef.current?.contains(e.target as Node) && 
-      !(e.target as HTMLElement).closest('input[type="checkbox"]')
-    ) {
-      setShowDetails(true)
-    }
-  }
-
+  // Utility functions
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -66,57 +52,28 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
       .toUpperCase()
   }
 
-  // Calculate stage based on status and engaged
-  const getStage = (status: string, engaged: boolean) => {
-    if (status === 'Engaged' && engaged) return 4;
-    if (status === 'Not Engaged' && !engaged) return 2;
-    return 1;
-  }
-
+  // Event handlers
   const handleEditClick = (e: React.MouseEvent) => {
-    try {
-      console.log('Edit button clicked for lead:', lead.id)
-      e.stopPropagation()
-      setShowEditModal(true)
-      setShowMenu(false)
-      console.log('Edit modal should be open now')
-    } catch (error) {
-      console.error('Error in handleEditClick:', error)
-    }
+    e.stopPropagation()
+    setShowEditModal(true)
+    setShowMenu(false)
   }
 
   const handleDeleteClick = (e: React.MouseEvent) => {
-    try {
-      console.log('Delete button clicked for lead:', lead.id)
-      e.stopPropagation()
-      setShowDeleteConfirm(true)
-      setShowMenu(false)
-      console.log('Delete confirm should be open now')
-    } catch (error) {
-      console.error('Error in handleDeleteClick:', error)
-    }
+    e.stopPropagation()
+    setShowDeleteConfirm(true)
+    setShowMenu(false)
   }
 
+
   const handleDeleteConfirm = () => {
-    try {
-      console.log('Confirming delete for lead:', lead.id)
-      onDelete(lead.id)
-      setShowDeleteConfirm(false)
-      console.log('Delete confirmed and modal closed')
-    } catch (error) {
-      console.error('Error in handleDeleteConfirm:', error)
-    }
+    onDelete(lead.id)
+    setShowDeleteConfirm(false)
   }
 
   const handleEditSubmitAsync = async (data: LeadUpdate) => {
-    try {
-      console.log('Submitting edit for lead:', lead.id, data)
-      await updateLead({ id: lead.id, data })
-      setShowEditModal(false)
-      console.log('Edit submitted successfully')
-    } catch (error) {
-      console.error('Failed to update lead:', error)
-    }
+    await updateLead({ id: lead.id, data })
+    setShowEditModal(false)
   }
 
   const handleEditSubmit = (id: string, data: LeadUpdate) => {
@@ -145,13 +102,12 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
             <div ref={menuRef} className="relative">
               <button
                 onClick={(e) => {
-                  console.log('Mobile menu button clicked')
                   e.stopPropagation()
                   setShowMenu(!showMenu)
                 }}
                 className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
               >
-                <MoreHorizontal className="h-5 w-5 text-gray-400" />
+                <MoreVertical className="h-5 w-5 text-gray-400" />
               </button>
 
               {showMenu && (
@@ -181,9 +137,16 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
               <StageProgress currentStage={lead.current_stage} />
             </div>
             <span className={`
-              inline-flex rounded-full px-2 text-xs font-medium leading-5
-              ${lead.engaged ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}
-            `}>
+              inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
+              ${lead.engaged 
+                ? 'bg-green-100 text-green-700' 
+                : 'bg-gray-100 text-gray-700'
+              }`
+            }>
+              {lead.engaged 
+                ? <CheckCircle className="h-3.5 w-3.5" /> 
+                : <Clock className="h-3.5 w-3.5" />
+              }
               {lead.status}
             </span>
           </div>
@@ -203,7 +166,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           <ConfirmDialog
             isOpen={showDeleteConfirm}
             onClose={() => {
-              console.log('Closing delete confirm')
               setShowDeleteConfirm(false)
             }}
             onConfirm={handleDeleteConfirm}
@@ -217,7 +179,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
             lead={lead}
             isOpen={showEditModal}
             onClose={() => {
-              console.log('Closing edit modal')
               setShowEditModal(false)
             }}
             onSubmit={handleEditSubmit}
@@ -225,7 +186,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           />
 
           <LeadDetailsSheet 
-            lead={showDetails ? lead : null}
+            lead={lead}
             isOpen={showDetails}
             onClose={() => setShowDetails(false)}
           />
@@ -239,12 +200,14 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
     <>
       <tr 
         className="hover:bg-gray-50 cursor-pointer"
-        onClick={handleRowClick}
+        onClick={() => setShowDetails(true)}
       >
         <td className="py-4 pl-6" onClick={e => e.stopPropagation()}>
           <input 
             type="checkbox" 
             className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+            checked={isSelected}
+            onChange={(e) => onSelectChange?.(e.target.checked)}
           />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
@@ -267,11 +230,17 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           <StageProgress currentStage={lead.current_stage} />
         </td>
         <td className="px-3 py-4 whitespace-nowrap">
-          <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${
-            lead.engaged
-              ? 'bg-green-100 text-green-800'
-              : 'bg-gray-100 text-gray-800'
-          }`}>
+          <span className={`
+            inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs
+            ${lead.engaged
+              ? 'bg-green-100 text-green-700'
+              : 'bg-gray-100 text-gray-700'
+            }`
+          }>
+            {lead.engaged 
+              ? <CheckCircle className="h-3.5 w-3.5" /> 
+              : <Clock className="h-3.5 w-3.5" />
+            }
             {lead.status}
           </span>
         </td>
@@ -290,7 +259,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
               }}
               className="p-1 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
             >
-              <MoreHorizontal className="h-5 w-5 text-gray-400" />
+              <MoreVertical className="h-5 w-5 text-gray-400" />
             </button>
 
             {showMenu && (
@@ -326,7 +295,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
       <ConfirmDialog
         isOpen={showDeleteConfirm}
         onClose={() => {
-          console.log('Closing delete confirm')
           setShowDeleteConfirm(false)
         }}
         onConfirm={handleDeleteConfirm}
@@ -340,7 +308,6 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
         lead={lead}
         isOpen={showEditModal}
         onClose={() => {
-          console.log('Closing edit modal')
           setShowEditModal(false)
         }}
         onSubmit={handleEditSubmit}
