@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional, List, Generic, TypeVar, Literal
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from enum import Enum
 
 # Define possible stages as Literal type
 LeadStage = Literal[
@@ -12,6 +13,15 @@ LeadStage = Literal[
     "Closed Won",
     "Closed Lost"
 ]
+
+# Add SortField enum
+class SortField(str, Enum):
+    """Enum for lead sorting fields"""
+    name = "name"
+    company = "company"
+    current_stage = "current_stage"
+    last_contacted = "last_contacted"
+    created_at = "created_at"
 
 class LeadBase(BaseModel):
     """
