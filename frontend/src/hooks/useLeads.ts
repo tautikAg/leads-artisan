@@ -40,7 +40,6 @@ interface UseLeadsReturn {
   createLead: (data: LeadCreate) => void;
   updateLead: (params: UpdateLeadParams) => void;
   deleteLead: (id: string) => void;
-  exportLeads: () => void;
   isUpdating: boolean;
   sort: { field: string; direction: 'asc' | 'desc' };
   onSort: (field: string, direction: 'asc' | 'desc') => void;
@@ -138,14 +137,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     },
   });
 
-  const exportLeads = async () => {
-    try {
-      await leadsApi.exportLeads();
-    } catch (error) {
-      console.error('Failed to export leads:', error);
-    }
-  };
-
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
     setFilters(prev => ({
       ...prev,
@@ -169,7 +160,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
       updateLead.mutate(params);
     },
     deleteLead: deleteMutation.mutate,
-    exportLeads,
     isUpdating: updateLead.isPending,
     sort: {
       field: filters.sortBy ?? 'created_at',
