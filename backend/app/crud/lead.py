@@ -155,27 +155,40 @@ class CRUDLead:
             if not current_lead:
                 raise LeadNotFoundException(id)
 
+            # Create a clean update dictionary
+            update_dict = {}
+            
+            # Copy basic fields
+            for key, value in update_data.items():
+                if value is not None and key not in ['stage_history', 'current_stage', 'engaged']:
+                    update_dict[key] = value
+
             # Handle stage transitions
             if "current_stage" in update_data:
                 stage_history = self._handle_stage_transition(
                     current_lead,
                     update_data["current_stage"]
                 )
-                update_data["stage_history"] = stage_history
+                update_dict["stage_history"] = stage_history
+                update_dict["current_stage"] = update_data["current_stage"]
+
+            # Handle engagement status
+            if "engaged" in update_data:
+                update_dict["engaged"] = update_data["engaged"]
+                update_dict["status"] = "Engaged" if update_data["engaged"] else "Not Engaged"
 
             # Update timestamps
-            update_data["updated_at"] = datetime.utcnow()
+            update_dict["updated_at"] = datetime.utcnow()
             
-            # Perform update
+            # Perform update with the prepared dictionary
             result = await collection.find_one_and_update(
                 {"_id": ObjectId(id)},
-                {"$set": update_data},
+                {"$set": update_dict},
                 return_document=True
             )
             
             if result:
-                result["id"] = str(result.pop("_id"))
-                return Lead(**result)
+                return Lead(**self._convert_id(result))
             
             raise LeadNotFoundException(id)
             

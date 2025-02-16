@@ -14,6 +14,7 @@ from app.core.exceptions import (
     InvalidStageTransitionException
 )
 from app.core.logging import logger
+from app.websocket.connection import manager
 
 router = APIRouter()
 
@@ -72,12 +73,12 @@ async def get_leads(
     summary="Create lead",
     description="Create a new lead with initial stage"
 )
-async def create_lead(lead_data: LeadCreate) -> Lead:
+async def create_lead(lead_data: LeadCreate, user_id: str = Query(...)) -> Lead:
     """Create a new lead"""
     try:
         created_lead = await lead.create(lead_data)
+        await manager.broadcast_lead_change(created_lead, "create", user_id)
         return created_lead
-        
     except DuplicateLeadException as e:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -124,12 +125,23 @@ async def get_lead(lead_id: str, response: Response) -> Lead:
     summary="Update lead",
     description="Update an existing lead"
 )
-async def update_lead(lead_id: str, lead_in: dict) -> Lead:
+async def update_lead(lead_id: str, lead_in: dict, user_id: str = Query(...)) -> Lead:
     """Update a lead"""
     try:
-        updated_lead = await lead.update(id=lead_id, update_data=lead_in)
-        if not updated_lead:
+        # Validate the lead exists first
+        existing_lead = await lead.get(lead_id)
+        if not existing_lead:
             raise LeadNotFoundException(lead_id)
+
+        # Clean the update data
+        update_data = {k: v for k, v in lead_in.items() if v is not None}
+        
+        # Perform the update
+        updated_lead = await lead.update(id=lead_id, update_data=update_data)
+        
+        # Broadcast the change
+        await manager.broadcast_lead_change(updated_lead, "update", user_id)
+        
         return updated_lead
         
     except LeadNotFoundException as e:
@@ -146,7 +158,7 @@ async def update_lead(lead_id: str, lead_in: dict) -> Lead:
         logger.error(f"Error updating lead {lead_id}: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating lead {lead_id}"
+            detail=f"Error updating lead: {str(e)}"
         )
 
 @router.delete(
@@ -156,22 +168,20 @@ async def update_lead(lead_id: str, lead_in: dict) -> Lead:
     summary="Delete lead",
     description="Delete a lead by ID"
 )
-async def delete_lead(lead_id: str) -> Lead:
+async def delete_lead(lead_id: str, user_id: str = Query(...)) -> Lead:
     """Delete a lead"""
     try:
-        deleted_lead = await lead.delete(lead_id=lead_id)
-        if not deleted_lead:
-            raise LeadNotFoundException(lead_id)
+        deleted_lead = await lead.delete(lead_id)
+        await manager.broadcast_lead_change(deleted_lead, "delete", user_id)
         return deleted_lead
-        
     except LeadNotFoundException as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e)
         )
     except Exception as e:
-        logger.error(f"Error deleting lead {lead_id}: {str(e)}")
+        logger.error(f"Error deleting lead: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting lead {lead_id}"
+            detail="Error deleting lead"
         ) 

@@ -14,6 +14,15 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/leads';
 import { LeadCreate, LeadUpdate, LeadFilters, Lead } from '../types/lead';
 import { useCallback, useEffect, useState } from 'react';
+import { showToast } from '../utils/toast';
+
+interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
 
 interface UpdateLeadParams {
   id: string;
@@ -81,22 +90,36 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     },
   });
 
-  const updateMutation = useMutation<Lead, Error, UpdateLeadParams>({
-    mutationFn: async ({ id, data }) => {
-      console.log('Updating lead with data:', data);
-      const response = await leadsApi.updateLead(id, data);
-      console.log('Update response:', response);
-      return response;
-    },
-    onSuccess: (updatedLead, variables) => {
-      console.log('Update mutation success. Updated lead:', updatedLead);
-      console.log('Current query data:', queryClient.getQueryData(['leads', filters]));
+  const updateLead = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: LeadUpdate }) => {
+      const updateData = {
+        ...data,
+        ...(data.stage_history && { 
+          stage_history: data.stage_history,
+          stage_updated_at: data.stage_updated_at 
+        })
+      };
       
-      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      return await leadsApi.updateLead(id, updateData);
+    },
+    onSuccess: (updatedLead) => {
+      queryClient.setQueryData<PaginatedResponse<Lead>>(
+        ['leads'],
+        (old: PaginatedResponse<Lead> | undefined) => {
+          if (!old) return old;
+          return {
+            ...old,
+            items: old.items.map((lead: Lead) =>
+              lead.id === updatedLead.id ? updatedLead : lead
+            ),
+          };
+        }
+      );
     },
     onError: (error) => {
       console.error('Update mutation error:', error);
-    }
+      showToast.error('Failed to update lead');
+    },
   });
 
   const deleteMutation = useMutation({
@@ -134,11 +157,11 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     createLead: createMutation.mutate,
     updateLead: (params: UpdateLeadParams) => {
       console.log('updateLead called with params:', params);
-      updateMutation.mutate(params);
+      updateLead.mutate(params);
     },
     deleteLead: deleteMutation.mutate,
     exportLeads,
-    isUpdating: updateMutation.isPending,
+    isUpdating: updateLead.isPending,
     sort: {
       field: filters.sortBy ?? 'created_at',
       direction: filters.sortDesc ? 'desc' : 'asc'

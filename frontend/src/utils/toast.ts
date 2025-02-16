@@ -1,32 +1,47 @@
-import { toast, ToastOptions } from 'react-toastify'
-
-const defaultOptions: ToastOptions = {
-  position: "top-right",
-  autoClose: 3000,
-  hideProgressBar: false,
-  closeOnClick: true,
-  pauseOnHover: true,
-  draggable: true,
-  progress: undefined,
-  theme: "light",
-  style: {
-    background: '#fff',
-    borderRadius: '0.5rem',
-    boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-  },
-}
+import { toast } from 'react-toastify'
 
 export const showToast = {
-  success: (message: string, options?: ToastOptions) => {
-    toast.success(message, { ...defaultOptions, ...options })
+  success: (message: string) => {
+    toast.success(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
   },
-  error: (message: string, options?: ToastOptions) => {
-    toast.error(message, { ...defaultOptions, ...options })
+
+  error: (message: string) => {
+    toast.error(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
   },
-  info: (message: string, options?: ToastOptions) => {
-    toast.info(message, { ...defaultOptions, ...options })
+
+  info: (message: string) => {
+    toast.info(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
   },
-  warning: (message: string, options?: ToastOptions) => {
-    toast.warning(message, { ...defaultOptions, ...options })
-  },
+
+  warning: (message: string) => {
+    toast.warning(message, {
+      position: "top-right",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+    })
+  }
 } 

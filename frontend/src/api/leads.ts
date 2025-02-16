@@ -1,5 +1,6 @@
 import { api } from './axios';
 import { Lead, LeadCreate, LeadUpdate, LeadFilters, LeadStage } from '../types/lead';
+import { websocketService } from '../services/websocket'
 
 interface PaginatedResponse<T> {
   items: T[];
@@ -26,52 +27,27 @@ export const leadsApi = {
   },
 
   createLead: async (lead: LeadCreate) => {
-    const leadData = {
-      name: lead.name,
-      email: lead.email,
-      company: lead.company,
-      status: lead.engaged ? "Engaged" : "Not Engaged",
-      engaged: lead.engaged,
-      current_stage: lead.current_stage,
-      stage_updated_at: new Date().toISOString(),
-      stage_history: [
-        {
-          from_stage: null,
-          to_stage: lead.current_stage,
-          changed_at: new Date().toISOString()
-        }
-      ],
-      last_contacted: lead.last_contacted
-    };
-    const { data } = await api.post<Lead>('/leads/', leadData);
-    return data;
+    const userId = websocketService.getUserId()
+    const { data } = await api.post<Lead>('/leads/', lead, {
+      params: { user_id: userId }
+    })
+    return data
   },
 
   updateLead: async (id: string, data: LeadUpdate) => {
-    try {
-      console.log('API updateLead called with:', { id, data });
-      
-      const updateData = {
-        ...data,
-        status: data.engaged !== undefined ? (data.engaged ? "Engaged" : "Not Engaged") : undefined,
-        stage_updated_at: data.stage_history ? data.stage_updated_at : new Date().toISOString(),
-      };
-      
-      console.log('Sending update data to API:', updateData);
-      
-      const { data: updatedLead } = await api.put<Lead>(`/leads/${id}`, updateData);
-      console.log('API response for updateLead:', updatedLead);
-      
-      return updatedLead;
-    } catch (error) {
-      console.error('Error in API updateLead:', error);
-      throw error;
-    }
+    const userId = websocketService.getUserId()
+    const { data: updatedLead } = await api.put<Lead>(`/leads/${id}`, data, {
+      params: { user_id: userId }
+    })
+    return updatedLead
   },
 
   deleteLead: async (id: string) => {
-    const { data } = await api.delete<Lead>(`/leads/${id}`);
-    return data;
+    const userId = websocketService.getUserId()
+    const { data } = await api.delete<Lead>(`/leads/${id}`, {
+      params: { user_id: userId }
+    })
+    return data
   },
 
   exportLeads: async () => {

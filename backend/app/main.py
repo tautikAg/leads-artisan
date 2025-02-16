@@ -5,6 +5,8 @@ from fastapi import FastAPI
 from app.core.config import settings
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.api import api_router
+from app.core.json import CustomJSONEncoder
+from fastapi.encoders import jsonable_encoder
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -14,6 +16,7 @@ async def lifespan(app: FastAPI):
     """
     db.connect()
     yield
+    db.close()
 
 
 
@@ -21,10 +24,11 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    lifespan=lifespan
+    lifespan=lifespan,
+    json_encoder=CustomJSONEncoder
 )
 
-# Configure CORS middleware
+# Configure CORS middleware with WebSocket support
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, replace with specific origins
