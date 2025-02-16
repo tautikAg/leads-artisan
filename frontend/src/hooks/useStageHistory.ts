@@ -1,3 +1,12 @@
+/**
+ * useStageHistory Hook
+ * 
+ * Manages the stage history for a lead.
+ * Provides functionality for:
+ * - Tracking stage transitions
+ * - Updating stage timestamps
+ * - Maintaining history order
+ */
 import { useState } from 'react'
 import { StageHistoryItem, LeadStage } from '../types/lead'
 
@@ -10,6 +19,7 @@ interface UseStageHistoryReturn {
 export function useStageHistory(initialHistory: StageHistoryItem[] = []): UseStageHistoryReturn {
   const [stageHistory, setStageHistory] = useState<StageHistoryItem[]>(initialHistory)
 
+  // Add new stage transition to history
   const updateStageHistory = (fromStage: LeadStage | null, toStage: LeadStage) => {
     const newHistoryItem: StageHistoryItem = {
       from_stage: fromStage,
@@ -19,6 +29,7 @@ export function useStageHistory(initialHistory: StageHistoryItem[] = []): UseSta
     setStageHistory(prev => [...prev, newHistoryItem])
   }
 
+  // Update timestamp for existing history item
   const editStageDate = (index: number, newDate: Date) => {
     setStageHistory(prev => {
       const updated = [...prev]

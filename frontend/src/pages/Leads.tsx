@@ -1,3 +1,12 @@
+/**
+ * Leads Component (Legacy)
+ * 
+ * Original leads management component.
+ * Handles basic lead operations with direct API calls.
+ * Consider using LeadsPage component for new implementations.
+ * 
+ * @deprecated Use LeadsPage component instead
+ */
 import React, { useState, useEffect } from 'react'
 import { Lead } from '../types/lead'
 import LeadList from '../components/list/LeadList'
@@ -5,6 +14,7 @@ import { leadsApi } from '../api/leads'
 import { SortDirection } from '../types/common'
 
 const Leads: React.FC = () => {
+  // State management for leads data
   const [leads, setLeads] = useState<Lead[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [totalLeads, setTotalLeads] = useState(0)
@@ -19,6 +29,7 @@ const Leads: React.FC = () => {
     direction: 'desc'
   });
 
+  // Fetch leads data from API
   const fetchLeads = async () => {
     try {
       setIsLoading(true)
@@ -40,6 +51,7 @@ const Leads: React.FC = () => {
     fetchLeads()
   }, [currentPage, pageSize])
 
+  // Handlers for various lead operations
   const handleSearch = async (searchTerm: string) => {
     try {
       setIsLoading(true)
@@ -70,7 +82,6 @@ const Leads: React.FC = () => {
 
   const handleSort = (field: string, direction: SortDirection) => {
     setCurrentSort({ field, direction });
-    // Add your sorting logic here
   };
 
   return (

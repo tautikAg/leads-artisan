@@ -1,3 +1,15 @@
+/**
+ * useLeads Hook
+ * 
+ * Central hook for lead management functionality.
+ * Provides comprehensive lead operations including:
+ * - CRUD operations
+ * - Pagination
+ * - Sorting
+ * - Filtering
+ * - Data prefetching
+ * - Export functionality
+ */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { leadsApi } from '../api/leads';
 import { LeadCreate, LeadUpdate, LeadFilters, Lead } from '../types/lead';
@@ -32,6 +44,7 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
   const [filters, setFilters] = useState<LeadFilters>(initialFilters);
   const queryClient = useQueryClient();
 
+  // Main query for fetching leads
   const query = useQuery({
     queryKey: ['leads', filters],
     queryFn: () => leadsApi.getLeads(filters),
@@ -41,7 +54,7 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     retry: false,
   });
 
-  // Prefetch next page
+  // Prefetch next page for smoother pagination
   const prefetchNextPage = useCallback(() => {
     if (filters.page && filters.page < (query.data?.total_pages ?? 0)) {
       const nextPage = filters.page + 1;
@@ -57,6 +70,7 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     prefetchNextPage();
   }, [prefetchNextPage]);
 
+  // Mutations for CRUD operations
   const createMutation = useMutation({
     mutationFn: (newLead: LeadCreate) => leadsApi.createLead(newLead),
     onSuccess: () => {

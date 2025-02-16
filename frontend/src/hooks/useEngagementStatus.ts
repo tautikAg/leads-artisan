@@ -1,3 +1,12 @@
+/**
+ * useEngagementStatus Hook
+ * 
+ * Manages the engagement status of a lead with associated UI configurations.
+ * Provides utilities for:
+ * - Tracking engaged/not engaged state
+ * - Generating status-specific UI configurations
+ * - Managing button styles and labels
+ */
 import { useState } from 'react'
 import { ENGAGEMENT_STATUSES } from '../constants/leads'
 
@@ -14,6 +23,7 @@ interface UseEngagementStatusReturn {
 export function useEngagementStatus(initialStatus = false): UseEngagementStatusReturn {
   const [engaged, setEngaged] = useState(initialStatus)
 
+  // Generate UI configuration based on engagement status
   const getStatusConfig = (isEngaged: boolean) => ({
     label: isEngaged ? ENGAGEMENT_STATUSES.ENGAGED.label : ENGAGEMENT_STATUSES.NOT_ENGAGED.label,
     description: isEngaged ? ENGAGEMENT_STATUSES.ENGAGED.description : ENGAGEMENT_STATUSES.NOT_ENGAGED.description,
