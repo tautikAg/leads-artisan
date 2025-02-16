@@ -23,7 +23,6 @@ interface LeadTableProps {
   onPageSizeChange: (pageSize: number) => void
   onSearch: (searchTerm: string) => void
   onAddLead: () => void
-  onExportAll: () => void
   onDeleteLead: (id: string) => void
   onSort: (field: string, direction: 'asc' | 'desc') => void
   currentSort: {
@@ -145,7 +144,6 @@ export default function LeadTable({
   onPageSizeChange,
   onSearch,
   onAddLead,
-  onExportAll,
   onDeleteLead,
   onSort,
   currentSort,
@@ -189,14 +187,6 @@ export default function LeadTable({
     { label: '20 per page', value: 20 },
     { label: '50 per page', value: 50 }
   ]
-
-  const handleLeadUpdate = (updatedLead: Lead) => {
-    setLeads(prevLeads => 
-      prevLeads.map(lead => 
-        lead.id === updatedLead.id ? updatedLead : lead
-      )
-    )
-  }
 
   // Update leads when initialLeads changes
   useEffect(() => {
@@ -383,7 +373,6 @@ export default function LeadTable({
                 <LeadItem 
                   lead={lead} 
                   onDelete={onDeleteLead}
-                  onUpdate={handleLeadUpdate}
                   isMobile={true}
                 />
               </div>
@@ -445,7 +434,6 @@ export default function LeadTable({
                         key={lead.id}
                         lead={lead}
                         onDelete={onDeleteLead}
-                        onUpdate={handleLeadUpdate}
                         isMobile={false}
                         isSelected={selectedLeads.has(lead.id)}
                         onSelectChange={(checked) => {

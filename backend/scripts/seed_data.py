@@ -23,7 +23,6 @@ class LeadSeeder:
         "Proposal Sent",
         "Negotiation",
         "Closed Won",
-        "Closed Lost"
     ]
 
     # Sample lead data

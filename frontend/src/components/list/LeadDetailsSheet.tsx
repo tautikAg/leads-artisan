@@ -1,10 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Lead } from '../../types/lead'
 import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format, parseISO } from 'date-fns'
 import { Edit2, Mail, Building2, Calendar, Save, X } from 'lucide-react'
-import EditLeadModal from '../modals/EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
@@ -19,7 +18,6 @@ interface LeadDetailsSheetProps {
 
 interface StageHistoryItemProps {
   stage: StageHistoryItem;
-  stageIdx: number;
   isLast: boolean;
   isEditing: boolean;
   onEdit: () => void;
@@ -33,7 +31,6 @@ interface StageHistoryItemProps {
 
 const StageHistoryItem = ({ 
   stage, 
-  stageIdx, 
   isLast, 
   isEditing, 
   onEdit, 

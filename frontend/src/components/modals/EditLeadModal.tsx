@@ -11,6 +11,7 @@ import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
 import { showToast } from '../../utils/toast'
+import { validateEmail } from '../../utils/validators'
 
 interface EditLeadModalProps {
   lead: Lead
@@ -25,6 +26,7 @@ interface EditLeadModalProps {
  * Manages form state, validation, and stage history tracking.
  */
 export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoading }: EditLeadModalProps) {
+  const [emailError, setEmailError] = useState<string>('')
   // Use form management hook with initial lead data
   const {
     name,
@@ -61,8 +63,18 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     updateStageHistory(currentStage, newStage)
   }
 
+  const handleEmailValidation = (email: string): boolean => {
+    const { isValid, error } = validateEmail(email)
+    setEmailError(error || '')
+    return isValid
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!handleEmailValidation(email)) {
+      return
+    }
     
     try {
       console.log('EditLeadModal handleSubmit - Initial lead:', lead);
@@ -91,6 +103,13 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
     } catch (error) {
       console.error('Error in EditLeadModal handleSubmit:', error);
       showToast.error('Failed to update lead')
+    }
+  }
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value)
+    if (emailError) {
+      handleEmailValidation(e.target.value)
     }
   }
 
@@ -134,7 +153,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
                   label="Email"
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                   placeholder="john@example.com"
                   required
                 />

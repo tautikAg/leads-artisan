@@ -97,7 +97,6 @@ const Leads: React.FC = () => {
         onPageSizeChange={setPageSize}
         onSearch={handleSearch}
         onAddLead={() => {/* Add lead logic */}}
-        onExportAll={leadsApi.exportLeads}
         onDeleteLead={handleDeleteLead}
         onSort={handleSort}
         currentSort={currentSort}

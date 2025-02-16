@@ -2,27 +2,17 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
 from bson import ObjectId
 from motor.motor_asyncio import AsyncIOMotorDatabase, AsyncIOMotorCollection
-from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadStage, StageChange
+from app.models.lead import Lead, LeadCreate, LeadUpdate, StageChange
 from app.core.exceptions import LeadNotFoundException, DuplicateLeadException
 from app.db.database import get_database
 from app.core.logging import logger
+from app.models.enums import Stage, EngagementStatus
 
 class CRUDLead:
     """
     Async CRUD operations for Lead model using MongoDB
     Implements repository pattern for lead management
     """
-    # Define stages in order of progression
-    STAGES: List[LeadStage] = [
-        "New Lead",
-        "Initial Contact",
-        "Meeting Scheduled",
-        "Proposal Sent",
-        "Negotiation",
-        "Closed Won",
-        "Closed Lost"
-    ]
-
     def __init__(self):
         self.collection_name = "leads"
         self.db = get_database()
@@ -91,30 +81,23 @@ class CRUDLead:
             logger.error(f"Error fetching leads: {str(e)}")
             raise
 
-    def _generate_stage_history(self, current_stage: LeadStage, base_time: datetime = None) -> List[Dict[str, Any]]:
-        """
-        Generate stage history up to the current stage
-        If base_time is None, we'll mark intermediate stages with None timestamps
-        """
-        current_index = self.STAGES.index(current_stage)
-        stage_history = []
+    def _generate_stage_history(self, current_stage: str, base_time: datetime = None) -> List[Dict[str, Any]]:
+        """Generate stage history for a lead based on current stage"""
+        history = []
+        if not base_time:
+            base_time = datetime.utcnow()
 
-        # Generate history for all stages up to current_stage
+        stages = Stage.list()
+        current_index = stages.index(current_stage)
+
         for i in range(current_index + 1):
-            stage_change = {
-                "from_stage": self.STAGES[i-1] if i > 0 else None,
-                "to_stage": self.STAGES[i],
-                "changed_at": (base_time + timedelta(days=i*3)) if base_time else (
-                    datetime.utcnow() if i == current_index else None  # Only set time for current stage
-                ),
-                "notes": (
-                    f"Current stage: {self.STAGES[i]}" if i == current_index
-                    else f"Previous stage: {self.STAGES[i]}"
-                )
-            }
-            stage_history.append(stage_change)
+            history.append({
+                "from_stage": stages[i-1] if i > 0 else None,
+                "to_stage": stages[i],
+                "changed_at": (base_time - timedelta(days=current_index - i)).isoformat(),
+            })
 
-        return stage_history
+        return history
 
     async def create(self, lead_data: LeadCreate) -> Lead:
         """Create a new lead with proper stage history"""
@@ -196,70 +179,17 @@ class CRUDLead:
             logger.error(f"Error updating lead {id}: {str(e)}")
             raise
 
-    def _handle_stage_transition(
-        self,
-        current_lead: Lead,
-        new_stage: LeadStage
-    ) -> List[Dict[str, Any]]:
-        """Handle stage transition logic and history updates"""
-        curr_idx = self.STAGES.index(current_lead.current_stage)
-        new_idx = self.STAGES.index(new_stage)
+    def _handle_stage_transition(self, current_lead: Lead, new_stage: str) -> List[Dict]:
+        stage_history = current_lead.stage_history or []
         
-        # If same stage, don't modify history
-        if curr_idx == new_idx:
-            return current_lead.stage_history
-
-        # When moving backwards, we need to preserve the original progression
-        # up to the new stage, and add the backward transition
-        if new_idx < curr_idx:
-            # Find the last occurrence of the target stage in history
-            target_stage_history = []
-            found_target = False
-            
-            for stage in current_lead.stage_history:
-                stage_idx = self.STAGES.index(stage["to_stage"])
-                
-                # Keep all stages up to where we first reached the target stage
-                if stage_idx <= new_idx or not found_target:
-                    target_stage_history.append(stage)
-                    
-                # Mark when we've found our target stage
-                if stage["to_stage"] == new_stage:
-                    found_target = True
-            
-            # Add the backward transition
-            target_stage_history.append({
+        if new_stage != current_lead.current_stage:
+            stage_history.append({
                 "from_stage": current_lead.current_stage,
                 "to_stage": new_stage,
-                "changed_at": datetime.utcnow(),
-                "notes": f"Updated from {current_lead.current_stage} to {new_stage}"
+                "changed_at": datetime.utcnow().isoformat(),
             })
-            
-            return target_stage_history
-
-        # Moving forwards
-        base_history = current_lead.stage_history.copy()
         
-        # Add any missing intermediate stages
-        if new_idx > curr_idx:
-            for i in range(curr_idx + 1, new_idx):
-                intermediate_stage = self.STAGES[i]
-                base_history.append({
-                    "from_stage": self.STAGES[i-1],
-                    "to_stage": intermediate_stage,
-                    "changed_at": datetime.utcnow(),
-                    "notes": f"Intermediate stage between {current_lead.current_stage} and {new_stage}"
-                })
-            
-            # Add the final transition
-            base_history.append({
-                "from_stage": current_lead.current_stage,
-                "to_stage": new_stage,
-                "changed_at": datetime.utcnow(),
-                "notes": f"Updated from {current_lead.current_stage} to {new_stage}"
-            })
-
-        return base_history
+        return stage_history
 
     async def delete(self, lead_id: str) -> Optional[Lead]:
         """Delete a lead"""

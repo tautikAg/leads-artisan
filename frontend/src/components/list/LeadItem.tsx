@@ -11,7 +11,6 @@ import { useLeads } from '../../hooks/useLeads'
 interface LeadItemProps {
   lead: Lead
   onDelete: (id: string) => void
-  onUpdate: (lead: Lead) => void
   isMobile: boolean
   isSelected?: boolean
   onSelectChange?: (checked: boolean) => void
@@ -21,7 +20,7 @@ interface LeadItemProps {
  * Individual lead item component that renders in both mobile and desktop views.
  * Handles lead actions like edit, delete, and viewing details.
  */
-export default function LeadItem({ lead, onDelete, onUpdate, isMobile, isSelected, onSelectChange }: LeadItemProps) {
+export default function LeadItem({ lead, onDelete, isMobile, isSelected, onSelectChange }: LeadItemProps) {
   // UI state management
   const [showMenu, setShowMenu] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
@@ -78,7 +77,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile, isSelecte
 
   const handleEditSubmit = (id: string, data: LeadUpdate) => {
     handleEditSubmitAsync(data).catch(error => {
-      console.error('Error in handleEditSubmit:', error)
+      console.error('Error in handleEditSubmit:', error, 'id ', id)
     })
   }
 

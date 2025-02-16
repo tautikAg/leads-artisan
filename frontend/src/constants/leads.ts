@@ -1,13 +1,4 @@
-import { LeadStage } from '../types/lead'
-
-export const LEAD_STAGES: LeadStage[] = [
-  "New Lead",
-  "Initial Contact",
-  "Meeting Scheduled",
-  "Proposal Sent",
-  "Negotiation",
-  "Closed Won"
-]
+export { LEAD_STAGES } from './stages'
 
 export const ENGAGEMENT_STATUSES = {
   ENGAGED: {
