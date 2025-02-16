@@ -4,10 +4,13 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
 import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus, MoreHorizontal, MoreVertical, Edit2, Trash2 } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
 import { format } from 'date-fns'
+import StageProgress from './StageProgress'
+import LeadDetailsSheet from './LeadDetailsSheet'
+import { Menu, Transition } from '@headlessui/react'
 
 interface LeadListProps {
   initialLeads: Lead[]
@@ -29,6 +32,101 @@ interface LeadListProps {
   }
 }
 
+// First, let's extract the pagination component to avoid duplication
+const Pagination = ({ 
+  currentPage, 
+  totalPages, 
+  pageSize, 
+  onPageChange, 
+  onPageSizeChange, 
+  pageSizeOptions 
+}: { 
+  currentPage: number
+  totalPages: number
+  pageSize: number
+  onPageChange: (page: number) => void
+  onPageSizeChange: (size: number) => void
+  pageSizeOptions: { label: string; value: number }[]
+}) => (
+  <div className="flex items-center justify-between">
+    <div className="flex items-center">
+      <Select
+        value={pageSize}
+        onChange={(value) => onPageSizeChange(Number(value))}
+        options={pageSizeOptions}
+        className="w-32"
+      />
+    </div>
+
+    <div className="flex items-center gap-2">
+      <button
+        className={`
+          p-2 rounded-md transition-colors
+          ${currentPage === 1 
+            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+          }
+        `}
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      
+      {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .filter(pageNum => 
+          pageNum === 1 || 
+          pageNum === totalPages || 
+          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
+        )
+        .map((pageNum, index, array) => {
+          if (index > 0 && pageNum - array[index - 1] > 1) {
+            return (
+              <span 
+                key={`ellipsis-${pageNum}`} 
+                className="px-2 text-gray-500"
+              >
+                ...
+              </span>
+            );
+          }
+          return (
+            <button
+              key={pageNum}
+              className={`
+                w-8 h-8 flex items-center justify-center rounded-md text-sm
+                ${currentPage === pageNum
+                  ? 'bg-purple-600 text-white'
+                  : 'text-gray-700 hover:bg-gray-50'
+                }
+              `}
+              onClick={() => onPageChange(pageNum)}
+            >
+              {pageNum}
+            </button>
+          );
+        })}
+
+      <button
+        className={`
+          p-2 rounded-md transition-colors
+          ${currentPage === totalPages 
+            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
+            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
+          }
+        `}
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+
+    {/* dont show this div when in mobile view */}
+    <div className="hidden sm:block"></div>
+  </div>
+)
+
 export default function LeadList({ 
   initialLeads = [],
   isLoading,
@@ -48,6 +146,8 @@ export default function LeadList({
   const [searchTerm, setSearchTerm] = useState('')
   const searchInputRef = useRef<HTMLInputElement>(null)
   const [leads, setLeads] = useState<Lead[]>(initialLeads)
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
+  const [showMobileMenu, setShowMobileMenu] = useState<string | null>(null)
 
   // Debounce the search callback
   const debouncedSearch = useMemo(
@@ -134,6 +234,17 @@ export default function LeadList({
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (showMobileMenu && !(event.target as Element).closest('.mobile-menu-container')) {
+        setShowMobileMenu(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMobileMenu]);
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -147,29 +258,87 @@ export default function LeadList({
   }
 
   return (
-    <div>
+    <div className="w-full">
       {/* Header Section */}
-      <div className="">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold text-gray-900">Leads</h1>
-          <div className="flex gap-3">
+      <div className="px-4 sm:px-0">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Leads</h1>
+          
+          {/* Desktop Actions */}
+          <div className="hidden sm:flex gap-3">
             <button 
               onClick={onAddLead}
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+              className="flex-1 sm:flex-none inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
             >
               <Plus className="w-4 h-4 mr-2" />
               Add Lead
             </button>
-            <ExportMenu onExport={() => exportToCSV(leads)} />
+            <ExportMenu leads={leads} />
+          </div>
+
+          {/* Mobile Actions Menu */}
+          <div className="sm:hidden absolute right-4 top-4 z-30">
+            <Menu as="div" className="relative">
+              <Menu.Button className="p-2 hover:bg-gray-50 rounded-full">
+                <MoreVertical className="h-5 w-5 text-gray-400" />
+              </Menu.Button>
+
+              <Transition
+                enter="transition duration-100 ease-out"
+                enterFrom="transform scale-95 opacity-0"
+                enterTo="transform scale-100 opacity-100"
+                leave="transition duration-75 ease-in"
+                leaveFrom="transform scale-100 opacity-100"
+                leaveTo="transform scale-95 opacity-0"
+              >
+                <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={onAddLead}
+                        className={`
+                          flex w-full items-center px-4 py-2 text-sm
+                          ${active ? 'bg-gray-50' : ''}
+                        `}
+                      >
+                        <Plus className="h-4 w-4 mr-3 text-gray-400" />
+                        Add Lead
+                      </button>
+                    )}
+                  </Menu.Item>
+                  <Menu.Item>
+                    {({ active }) => (
+                      <button
+                        onClick={() => exportToCSV(leads)}
+                        className={`
+                          flex w-full items-center px-4 py-2 text-sm
+                          ${active ? 'bg-gray-50' : ''}
+                        `}
+                      >
+                        <svg 
+                          className="h-4 w-4 mr-3 text-gray-400" 
+                          viewBox="0 0 20 20" 
+                          fill="currentColor"
+                        >
+                          <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
+                        </svg>
+                        Export All
+                      </button>
+                    )}
+                  </Menu.Item>
+                </Menu.Items>
+              </Transition>
+            </Menu>
           </div>
         </div>
 
-        <form onSubmit={handleSearchSubmit} className="flex items-center gap-3">
+        <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <SearchInput
             ref={searchInputRef}
-            placeholder="Search by lead's name, email or company name"
+            placeholder="Search leads..."
             value={searchTerm}
             onChange={handleSearchChange}
+            className="w-full"
           />
           
           <FilterSortDropdown 
@@ -183,8 +352,30 @@ export default function LeadList({
         </div>
       </div>
 
-      {/* Table Section */}
-      <div className="">
+      {/* Mobile List View */}
+      <div className="block sm:hidden mt-4">
+        {Array.isArray(leads) && leads.length > 0 ? (
+          <div className="space-y-2 px-4">
+            {leads.map((lead) => (
+              <div key={lead.id} className="bg-white rounded-lg border border-gray-200">
+                <LeadItem 
+                  lead={lead} 
+                  onDelete={onDeleteLead}
+                  onUpdate={handleLeadUpdate}
+                  isMobile={true}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="px-4 py-8 text-center text-gray-500">
+            {isLoading ? 'Loading...' : 'No leads found'}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden sm:block">
         <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
           <div className="inline-block min-w-full py-2 align-middle md:px-6 lg:px-8">
             <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
@@ -222,6 +413,7 @@ export default function LeadList({
                         lead={lead} 
                         onDelete={onDeleteLead}
                         onUpdate={handleLeadUpdate}
+                        isMobile={false}
                       />
                     ))
                   ) : (
@@ -234,89 +426,40 @@ export default function LeadList({
                 </tbody>
               </table>
 
-              {/* Pagination - Now inside the table container */}
-              <div className="px-6 py-4 bg-white border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Select
-                      value={pageSize}
-                      onChange={(value) => onPageSizeChange(Number(value))}
-                      options={pageSizeOptions}
-                      className="w-32"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <button
-                      className={`
-                        p-2 rounded-md transition-colors
-                        ${currentPage === 1 
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                        }
-                      `}
-                      onClick={() => onPageChange(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    
-                    {Array.from({ length: totalPages }, (_, i) => i + 1)
-                      .filter(pageNum => 
-                        pageNum === 1 || 
-                        pageNum === totalPages || 
-                        (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-                      )
-                      .map((pageNum, index, array) => {
-                        if (index > 0 && pageNum - array[index - 1] > 1) {
-                          return (
-                            <span 
-                              key={`ellipsis-${pageNum}`} 
-                              className="px-2 text-gray-500"
-                            >
-                              ...
-                            </span>
-                          );
-                        }
-                        return (
-                          <button
-                            key={pageNum}
-                            className={`
-                              w-8 h-8 flex items-center justify-center rounded-md text-sm
-                              ${currentPage === pageNum
-                                ? 'bg-purple-600 text-white'
-                                : 'text-gray-700 hover:bg-gray-50'
-                              }
-                            `}
-                            onClick={() => onPageChange(pageNum)}
-                          >
-                            {pageNum}
-                          </button>
-                        );
-                      })}
-
-                    <button
-                      className={`
-                        p-2 rounded-md transition-colors
-                        ${currentPage === totalPages 
-                          ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-                          : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-                        }
-                      `}
-                      onClick={() => onPageChange(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-
-                  <div className=""></div>
-                </div>
+              {/* Desktop Pagination - Inside table container */}
+              <div className="px-6 py-4 bg-white border-t border-gray-200 hidden sm:block">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  pageSize={pageSize}
+                  onPageChange={onPageChange}
+                  onPageSizeChange={onPageSizeChange}
+                  pageSizeOptions={pageSizeOptions}
+                />
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Pagination - Outside table */}
+      <div className="block sm:hidden px-4 sm:px-6 py-4 ">
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          onPageSizeChange={onPageSizeChange}
+          pageSizeOptions={pageSizeOptions}
+        />
+      </div>
+
+      {/* Lead Details Sheet */}
+      <LeadDetailsSheet
+        lead={selectedLead}
+        isOpen={!!selectedLead}
+        onClose={() => setSelectedLead(null)}
+      />
     </div>
   )
 } 
