@@ -17,9 +17,9 @@ interface AddLeadModalProps {
     email: string
     company: string
     current_stage: LeadStage
-    status: string
     engaged: boolean
     last_contacted: string
+    status?: string
   }) => void
   isLoading?: boolean
 }
@@ -56,6 +56,7 @@ export default function AddLeadModal({ isOpen, onClose, onSubmit, isLoading }: A
         company,
         engaged,
         current_stage: currentStage,
+        status: engaged ? "Engaged" : "Not Engaged",
         last_contacted: lastContacted.toISOString()
       })
       // Just close the modal, let the mutation handle the success message

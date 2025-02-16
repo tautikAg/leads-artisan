@@ -59,7 +59,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     queryFn: () => leadsApi.getLeads(filters),
     staleTime: 1000 * 60,
     placeholderData: (previousData) => {
-      console.log('Previous query data:', previousData);
       return previousData;
     },
     refetchOnWindowFocus: false,
@@ -87,7 +86,6 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
     mutationFn: (newLead: LeadCreate) => leadsApi.createLead(newLead),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] });
-      showToast.success('Lead added successfully');
     },
     onError: (error: any) => {
       // Handle specific error cases

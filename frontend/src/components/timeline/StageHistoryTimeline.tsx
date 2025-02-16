@@ -77,53 +77,55 @@ export default function StageHistoryTimeline({
                     <div className="h-2.5 w-2.5 rounded-full bg-purple-600" />
                   </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm text-gray-900 font-medium mb-1 break-words">
+                <div className="flex-1 min-w-0 flex items-start justify-between">
+                  <div className="text-sm text-gray-900 font-medium break-words max-w-[60%]">
                     {item.from_stage ? 
                       `Moved from ${item.from_stage} to ${item.to_stage}` : 
                       `Started as ${item.to_stage}`
                     }
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                  <div className="ml-4 text-right">
                     {editingIndex === index ? (
-                      <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg border border-gray-200 p-1.5 w-full max-w-[300px]">
+                      <div className="bg-white shadow-sm rounded-lg border border-gray-200 p-1.5">
                         <DatePicker
                           selected={editDate}
                           onChange={setEditDate}
-                          className="w-full text-sm bg-transparent outline-none text-gray-600"
+                          className="w-[180px] text-sm bg-transparent outline-none text-gray-600"
                           dateFormat="MMM d, yyyy h:mm aa"
                           showTimeSelect
                           timeFormat="h:mm aa"
                           timeIntervals={15}
                         />
-                        <div className="flex gap-1.5 border-l pl-1.5 shrink-0">
+                        <div className="flex gap-1.5 border-t mt-1.5 pt-1.5 justify-end">
                           <button 
                             onClick={() => handleSave(index)}
                             disabled={isUpdating}
-                            className="p-1.5 rounded-md text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50"
+                            className="p-1.5 rounded-md text-green-600 hover:bg-green-50 transition-colors disabled:opacity-50 flex items-center gap-1 text-sm"
                           >
                             <Save className="h-3.5 w-3.5" />
+                            <span>Save</span>
                           </button>
                           <button 
                             onClick={() => setEditingIndex(null)}
-                            className="p-1.5 rounded-md text-gray-400 hover:bg-gray-50 transition-colors"
+                            className="p-1.5 rounded-md text-gray-400 hover:bg-gray-50 transition-colors flex items-center gap-1 text-sm"
                           >
                             <X className="h-3.5 w-3.5" />
+                            <span>Cancel</span>
                           </button>
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <span className="text-sm text-gray-500">
-                          {formatDate(item.changed_at)}
-                        </span>
+                      <div className="flex flex-col items-end">
                         <button 
                           onClick={() => handleEdit(index, item.changed_at)}
-                          className="p-1.5 hover:bg-gray-100 rounded-md transition-all shrink-0"
+                          className="p-1.5 hover:bg-gray-100 rounded-md transition-all text-gray-400 hover:text-gray-600 mb-1 flex items-center gap-1 text-sm"
                         >
-                          <Edit2 className="h-3.5 w-3.5 text-gray-400" />
+                          <Edit2 className="h-3.5 w-3.5" />
                         </button>
-                      </>
+                        <span className="text-sm text-gray-500 whitespace-nowrap">
+                          {formatDate(item.changed_at)}
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>
