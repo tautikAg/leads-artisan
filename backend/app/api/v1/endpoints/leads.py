@@ -1,36 +1,44 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, status, Depends
 from app.crud.lead import lead
-from app.models.lead import Lead, LeadCreate, LeadUpdate, LeadPaginatedResponse
+from app.models.lead import (
+    Lead, 
+    LeadCreate, 
+    LeadUpdate, 
+    LeadPaginatedResponse,
+    SortField
+)
+from app.core.exceptions import (
+    LeadNotFoundException,
+    DuplicateLeadException,
+    InvalidStageTransitionException
+)
+from app.core.logging import logger
 import math
 from ....crud.lead import CRUDLead
-from enum import Enum
 
 router = APIRouter()
 lead_crud = CRUDLead()
 
-class SortField(str, Enum):
-    name = "name"
-    company = "company"
-    current_stage = "current_stage"
-    last_contacted = "last_contacted"
-    created_at = "created_at"
-
-@router.get("/", response_model=LeadPaginatedResponse)
+@router.get(
+    "/",
+    response_model=LeadPaginatedResponse,
+    summary="Get all leads",
+    description="Retrieve leads with pagination, sorting, and search capabilities"
+)
 async def get_leads(
     page: int = Query(1, ge=1, description="Page number"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
-    sort_by: SortField = Query(SortField.created_at, description="Field to sort by"),
-    sort_desc: bool = Query(True, description="Sort in descending order"),
-    search: Optional[str] = Query(None, min_length=1)
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    sort_by: SortField = Query(SortField.created_at, description="Sort field"),
+    sort_desc: bool = Query(True, description="Sort descending"),
+    search: Optional[str] = Query(None, min_length=1, description="Search term")
 ) -> LeadPaginatedResponse:
     """
-    Get all leads with pagination, sorting, and search capabilities
+    Get paginated leads with optional filtering and sorting
     """
     try:
         skip = (page - 1) * page_size
         
-        # Get paginated results
         items = await lead.get_multi(
             skip=skip,
             limit=page_size,
@@ -39,9 +47,8 @@ async def get_leads(
             search=search
         )
         
-        # Get total count for pagination
         total_count = await lead.get_count(search)
-        total_pages = math.ceil(total_count / page_size)
+        total_pages = (total_count + page_size - 1) // page_size
         
         return LeadPaginatedResponse(
             items=items,
@@ -50,22 +57,29 @@ async def get_leads(
             page_size=page_size,
             total_pages=total_pages
         )
+        
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error fetching leads: {str(e)}")
+        raise
 
-@router.post("/", response_model=Lead)
-async def create_lead(lead_data: LeadCreate):
-    """Create a new lead"""
+@router.post(
+    "/",
+    response_model=Lead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create lead",
+    description="Create a new lead with initial stage"
+)
+async def create_lead(lead_data: LeadCreate) -> Lead:
+    """
+    Create a new lead
+    """
     try:
-        db_lead = await lead.get_by_email(email=lead_data.email)
-        if db_lead:
-            raise HTTPException(
-                status_code=400,
-                detail="A lead with this email already exists."
-            )
         return await lead.create(lead_data)
+    except DuplicateLeadException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Error creating lead: {str(e)}")
+        raise
 
 @router.get("/{lead_id}", response_model=Lead)
 def get_lead(lead_id: str) -> Lead:
