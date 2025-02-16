@@ -225,7 +225,7 @@ export default function LeadItem({ lead, onDelete, onUpdate, isMobile }: LeadIte
           />
 
           <LeadDetailsSheet 
-            lead={showDetails ? lead : null}
+            lead={lead}
             isOpen={showDetails}
             onClose={() => setShowDetails(false)}
           />
