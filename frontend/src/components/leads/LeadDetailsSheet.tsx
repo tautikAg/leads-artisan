@@ -181,21 +181,35 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
     if (!editingStage || !lead) return
 
     const newHistory = [...stageHistory]
+    const newChangedAt = editingStage.date?.toISOString() || new Date().toISOString()
+    
     newHistory[index] = {
       ...newHistory[index],
-      changed_at: editingStage.date?.toISOString() || null
+      changed_at: newChangedAt
     }
 
     try {
+      // If we're updating the latest stage, update stage_updated_at
+      const isLatestStage = index === newHistory.length - 1
+      
       const updateData: LeadUpdate = {
+        name: lead.name,
+        email: lead.email,
+        company: lead.company,
+        current_stage: lead.current_stage,
+        engaged: lead.engaged,
+        last_contacted: lead.last_contacted,
+        status: lead.status,
         stage_history: newHistory,
-        stage_updated_at: newHistory[newHistory.length - 1].changed_at || undefined
+        // Set stage_updated_at only if we're updating the latest stage
+        stage_updated_at: isLatestStage ? newChangedAt : lead.stage_updated_at
       }
 
       await updateLead({ 
         id: lead.id, 
         data: updateData
       })
+      
       setStageHistory(newHistory)
       setEditingStage(null)
     } catch (error) {

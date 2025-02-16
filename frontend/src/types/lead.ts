@@ -54,7 +54,7 @@ export interface LeadUpdate {
 export interface StageHistoryItem {
   from_stage: LeadStage | null;
   to_stage: LeadStage;
-  changed_at: string | null;
+  changed_at: string;
   notes?: string;
 }
 

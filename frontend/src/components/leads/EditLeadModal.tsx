@@ -84,6 +84,12 @@ const FormInput = ({ label, ...props }: React.InputHTMLAttributes<HTMLInputEleme
   </div>
 )
 
+const createStageHistoryItem = (fromStage: LeadStage | null, toStage: LeadStage) => ({
+  from_stage: fromStage,
+  to_stage: toStage,
+  changed_at: new Date().toISOString()
+});
+
 export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoading }: EditLeadModalProps) {
   const [name, setName] = useState(lead.name)
   const [email, setEmail] = useState(lead.email)
@@ -91,6 +97,7 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
   const [currentStage, setCurrentStage] = useState<LeadStage>(lead.current_stage)
   const [engaged, setEngaged] = useState(lead.engaged)
   const [lastContacted, setLastContacted] = useState<Date>(new Date(lead.last_contacted))
+  const [initialStage] = useState<LeadStage>(lead.current_stage)
 
   // Update form when lead changes
   useEffect(() => {
@@ -104,6 +111,8 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    
+    const now = new Date().toISOString()
     const updateData: LeadUpdate = {
       name,
       email,
@@ -112,6 +121,16 @@ export default function EditLeadModal({ lead, isOpen, onClose, onSubmit, isLoadi
       engaged,
       last_contacted: lastContacted.toISOString()
     }
+
+    // If stage has changed, add stage history and update stage_updated_at
+    if (currentStage !== initialStage) {
+      updateData.stage_history = [
+        ...(lead.stage_history || []),
+        createStageHistoryItem(initialStage, currentStage)
+      ]
+      updateData.stage_updated_at = now
+    }
+
     onSubmit(lead.id, updateData)
   }
 
