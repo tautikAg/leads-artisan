@@ -1,5 +1,5 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, HTTPException, Query, status, Depends
+from fastapi import APIRouter, HTTPException, Query, status, Response
 from app.crud.lead import lead
 from app.models.lead import (
     Lead, 
@@ -14,28 +14,25 @@ from app.core.exceptions import (
     InvalidStageTransitionException
 )
 from app.core.logging import logger
-import math
-from ....crud.lead import CRUDLead
 
 router = APIRouter()
-lead_crud = CRUDLead()
 
 @router.get(
     "/",
     response_model=LeadPaginatedResponse,
+    status_code=status.HTTP_200_OK,
     summary="Get all leads",
     description="Retrieve leads with pagination, sorting, and search capabilities"
 )
 async def get_leads(
+    response: Response,
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(10, ge=1, le=100, description="Items per page"),
     sort_by: SortField = Query(SortField.created_at, description="Sort field"),
     sort_desc: bool = Query(True, description="Sort descending"),
     search: Optional[str] = Query(None, min_length=1, description="Search term")
 ) -> LeadPaginatedResponse:
-    """
-    Get paginated leads with optional filtering and sorting
-    """
+    """Get paginated leads with optional filtering and sorting"""
     try:
         skip = (page - 1) * page_size
         
@@ -50,6 +47,9 @@ async def get_leads(
         total_count = await lead.get_count(search)
         total_pages = (total_count + page_size - 1) // page_size
         
+        if not items:
+            response.status_code = status.HTTP_204_NO_CONTENT
+            
         return LeadPaginatedResponse(
             items=items,
             total=total_count,
@@ -60,7 +60,10 @@ async def get_leads(
         
     except Exception as e:
         logger.error(f"Error fetching leads: {str(e)}")
-        raise
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error fetching leads"
+        )
 
 @router.post(
     "/",
@@ -70,65 +73,105 @@ async def get_leads(
     description="Create a new lead with initial stage"
 )
 async def create_lead(lead_data: LeadCreate) -> Lead:
-    """
-    Create a new lead
-    """
+    """Create a new lead"""
     try:
-        return await lead.create(lead_data)
-    except DuplicateLeadException:
-        raise
+        created_lead = await lead.create(lead_data)
+        return created_lead
+        
+    except DuplicateLeadException as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(e)
+        )
     except Exception as e:
         logger.error(f"Error creating lead: {str(e)}")
-        raise
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating lead"
+        )
 
-@router.get("/{lead_id}", response_model=Lead)
-def get_lead(lead_id: str) -> Lead:
+@router.get(
+    "/{lead_id}",
+    response_model=Lead,
+    status_code=status.HTTP_200_OK,
+    summary="Get lead",
+    description="Get a specific lead by ID"
+)
+async def get_lead(lead_id: str, response: Response) -> Lead:
     """Get a specific lead by ID"""
-    db_lead = lead.get(lead_id=lead_id)
-    if not db_lead:
-        raise HTTPException(
-            status_code=404,
-            detail="Lead not found"
-        )
-    return db_lead
-
-@router.put("/{lead_id}", response_model=Lead)
-async def update_lead(
-    lead_id: str,
-    lead_in: dict  # Change this to accept raw dict instead of LeadUpdate
-) -> Any:
-    """
-    Update a lead.
-    """
     try:
-        # Print debug information
-        print("Updating lead:", lead_id)
-        print("Update data:", lead_in)
+        db_lead = await lead.get(lead_id)
+        if not db_lead:
+            raise LeadNotFoundException(lead_id)
+        return db_lead
         
-        # Update the lead
-        updated_lead = await lead.update(id=lead_id, update_data=lead_in)
-        
-        if not updated_lead:
-            raise HTTPException(status_code=404, detail="Lead not found")
-        
-        return updated_lead
-    except Exception as e:
-        print("Error updating lead:", str(e))  # Debug print
+    except LeadNotFoundException as e:
         raise HTTPException(
-            status_code=500,
-            detail=f"Error updating lead: {str(e)}"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error fetching lead {lead_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error fetching lead {lead_id}"
         )
 
-@router.delete("/{lead_id}", response_model=Lead)
+@router.put(
+    "/{lead_id}",
+    response_model=Lead,
+    status_code=status.HTTP_200_OK,
+    summary="Update lead",
+    description="Update an existing lead"
+)
+async def update_lead(lead_id: str, lead_in: dict) -> Lead:
+    """Update a lead"""
+    try:
+        updated_lead = await lead.update(id=lead_id, update_data=lead_in)
+        if not updated_lead:
+            raise LeadNotFoundException(lead_id)
+        return updated_lead
+        
+    except LeadNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
+    except InvalidStageTransitionException as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        logger.error(f"Error updating lead {lead_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error updating lead {lead_id}"
+        )
+
+@router.delete(
+    "/{lead_id}",
+    response_model=Lead,
+    status_code=status.HTTP_200_OK,
+    summary="Delete lead",
+    description="Delete a lead by ID"
+)
 async def delete_lead(lead_id: str) -> Lead:
     """Delete a lead"""
     try:
         deleted_lead = await lead.delete(lead_id=lead_id)
         if not deleted_lead:
-            raise HTTPException(
-                status_code=404,
-                detail="Lead not found"
-            )
+            raise LeadNotFoundException(lead_id)
         return deleted_lead
+        
+    except LeadNotFoundException as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e)
+        )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        logger.error(f"Error deleting lead {lead_id}: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error deleting lead {lead_id}"
+        ) 
