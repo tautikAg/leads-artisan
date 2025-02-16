@@ -4,11 +4,11 @@ import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format, parseISO } from 'date-fns'
 import { Edit2, Mail, Building2, Calendar, Save, X } from 'lucide-react'
-import EditLeadModal from './EditLeadModal'
+import EditLeadModal from '../modals/EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
-import StageHistoryTimeline from './StageHistoryTimeline'
+import StageHistoryTimeline from '../timeline/StageHistoryTimeline'
 import { useStageHistory } from '../../hooks/useStageHistory'
 
 interface LeadDetailsSheetProps {

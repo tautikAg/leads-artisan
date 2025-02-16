@@ -2,7 +2,7 @@ import { ChangeEvent } from 'react'
 import { FormInput } from '../common/FormInput'
 import DatePicker from 'react-datepicker'
 import { LeadStage } from '../../types/lead'
-import StageStep from './StageStep'
+import StageStep from '../progress/StageStep'
 
 interface LeadFormFieldsProps {
   name: string

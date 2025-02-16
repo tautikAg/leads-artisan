@@ -1,12 +1,11 @@
-import { useState } from 'react'
 import { X } from 'lucide-react'
 import { LeadStage } from '../../types/lead'
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { LEAD_STAGES } from '../../constants/leads'
-import StageProgressBar from './StageProgressBar'
-import StageStep from './StageStep'
-import EngagementStatusButtons from './EngagementStatusButtons'
+import StageProgressBar from '../progress/StageProgressBar'
+import StageStep from '../progress/StageStep'
+import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
 

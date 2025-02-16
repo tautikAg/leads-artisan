@@ -1,6 +1,6 @@
 import { LeadStage } from '../../types/lead'
-import StageProgressBar from './StageProgressBar'
-import StageStep from './StageStep'
+import StageProgressBar from '../progress/StageProgressBar'
+import StageStep from '../progress/StageStep'
 
 interface StageSelectorProps {
   currentStage: LeadStage

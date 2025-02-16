@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { Lead } from '../types/lead'
-import LeadList from '../components/leads/LeadList'
+import LeadList from '../components/list/LeadList'
 import { leadsApi } from '../api/leads'
 import { SortDirection } from '../types/common'
 

@@ -5,9 +5,9 @@ import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import { useStageHistory } from '../../hooks/useStageHistory'
 import { LEAD_STAGES } from '../../constants/leads'
-import StageProgressBar from './StageProgressBar'
-import StageStep from './StageStep'
-import EngagementStatusButtons from './EngagementStatusButtons'
+import StageProgressBar from '../progress/StageProgressBar'
+import StageStep from '../progress/StageStep'
+import EngagementStatusButtons from '../form/EngagementStatusButtons'
 import { FormInput } from '../common/FormInput'
 import { useLeadForm } from '../../hooks/useLeadForm'
 

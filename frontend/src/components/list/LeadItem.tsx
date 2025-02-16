@@ -3,9 +3,9 @@ import { Lead, LeadUpdate } from '../../types/lead'
 import { MoreHorizontal, Trash2, Edit2, ChevronRight } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import ConfirmDialog from '../common/ConfirmDialog'
-import StageProgress from './StageProgress'
+import StageProgress from '../progress/StageProgress'
 import LeadDetailsSheet from './LeadDetailsSheet'
-import EditLeadModal from './EditLeadModal'
+import EditLeadModal from '../modals/EditLeadModal'
 import { useLeads } from '../../hooks/useLeads'
 
 interface LeadItemProps {

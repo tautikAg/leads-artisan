@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useLeads } from '../hooks/useLeads'
 import { LeadFilters, Lead } from '../types/lead'
-import LeadList from '../components/leads/LeadList'
-import AddLeadModal from '../components/leads/AddLeadModal'
+import LeadList from '../components/list/LeadList'
+import AddLeadModal from '../components/modals/AddLeadModal'
 import { showToast } from '../utils/toast'
 import { leadsApi } from '../api/leads'
 
