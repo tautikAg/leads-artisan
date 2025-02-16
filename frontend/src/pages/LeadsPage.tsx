@@ -36,7 +36,6 @@ const LeadsPage: React.FC = () => {
     pageSize = 10,
     totalPages = 1,
     isLoading, 
-    error, 
     createLead,
     deleteLead,
     onPageChange,
@@ -78,7 +77,6 @@ const LeadsPage: React.FC = () => {
         onPageSizeChange={onPageSizeChange}
         onSearch={onSearch}
         onAddLead={() => setIsAddModalOpen(true)}
-        onExportAll={exportLeads}
         onDeleteLead={handleDeleteLead}
         onSort={onSort}
         currentSort={sort}
