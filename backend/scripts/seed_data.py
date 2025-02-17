@@ -7,7 +7,8 @@ sys.path.append(backend_dir)
 
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
-from app.models.lead import LeadCreate, LeadStage
+from app.models.lead import LeadCreate
+from app.models.enums import Stage
 from app.crud.lead import lead
 
 class LeadSeeder:
@@ -16,13 +17,13 @@ class LeadSeeder:
     """
     
     # Define stages in order of progression
-    STAGES: List[LeadStage] = [
-        "New Lead",
-        "Initial Contact",
-        "Meeting Scheduled",
-        "Proposal Sent",
-        "Negotiation",
-        "Closed Won",
+    STAGES: List[str] = [
+        Stage.NEW_LEAD.value,
+        Stage.INITIAL_CONTACT.value,
+        Stage.MEETING_SCHEDULED.value,
+        Stage.PROPOSAL_SENT.value,
+        Stage.NEGOTIATION.value,
+        Stage.CLOSED_WON.value,
     ]
 
     # Sample lead data
@@ -111,7 +112,7 @@ class LeadSeeder:
     ]
 
     @classmethod
-    def _generate_stage_history(cls, current_stage: LeadStage) -> List[Dict[str, Any]]:
+    def _generate_stage_history(cls, current_stage: str) -> List[Dict[str, Any]]:
         """
         Generate stage history for a lead up to their current stage
         """
