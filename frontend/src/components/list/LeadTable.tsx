@@ -3,14 +3,13 @@ import LeadItem from './LeadItem'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { debounce } from 'lodash'
 import SearchInput from '../common/SearchInput'
-import Select from '../common/Select'
-import { ChevronLeft, ChevronRight, Plus, MoreHorizontal } from 'lucide-react'
+import { Plus, MoreHorizontal } from 'lucide-react'
 import FilterSortDropdown from './FilterSortDropdown'
 import ExportMenu from './ExportMenu'
-import { format } from 'date-fns'
 import LeadDetailsSheet from './LeadDetailsSheet'
 import { Menu, Transition } from '@headlessui/react'
 import LoadingSpinner from '../common/LoadingSpinner'
+import Pagination from '../common/Pagination'
 
 interface LeadTableProps {
   initialLeads: Lead[]
@@ -29,102 +28,8 @@ interface LeadTableProps {
     field: string
     direction: 'asc' | 'desc'
   }
+  onExportAll: () => Promise<void>
 }
-
-// First, let's extract the pagination component to avoid duplication
-const Pagination = ({ 
-  currentPage, 
-  totalPages, 
-  pageSize, 
-  onPageChange, 
-  onPageSizeChange, 
-  pageSizeOptions 
-}: { 
-  currentPage: number
-  totalPages: number
-  pageSize: number
-  onPageChange: (page: number) => void
-  onPageSizeChange: (size: number) => void
-  pageSizeOptions: { label: string; value: number }[]
-}) => (
-  <div className="flex items-center justify-between">
-    <div className="flex items-center">
-      <Select
-        value={pageSize}
-        onChange={(value) => onPageSizeChange(Number(value))}
-        options={pageSizeOptions}
-        className="w-32"
-      />
-    </div>
-
-    <div className="flex items-center gap-2">
-      <button
-        className={`
-          p-2 rounded-md transition-colors
-          ${currentPage === 1 
-            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-          }
-        `}
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-      >
-        <ChevronLeft className="h-4 w-4" />
-      </button>
-      
-      {Array.from({ length: totalPages }, (_, i) => i + 1)
-        .filter(pageNum => 
-          pageNum === 1 || 
-          pageNum === totalPages || 
-          (pageNum >= currentPage - 1 && pageNum <= currentPage + 1)
-        )
-        .map((pageNum, index, array) => {
-          if (index > 0 && pageNum - array[index - 1] > 1) {
-            return (
-              <span 
-                key={`ellipsis-${pageNum}`} 
-                className="px-2 text-gray-500"
-              >
-                ...
-              </span>
-            );
-          }
-          return (
-            <button
-              key={pageNum}
-              className={`
-                w-8 h-8 flex items-center justify-center rounded-md text-sm
-                ${currentPage === pageNum
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-700 hover:bg-gray-50'
-                }
-              `}
-              onClick={() => onPageChange(pageNum)}
-            >
-              {pageNum}
-            </button>
-          );
-        })}
-
-      <button
-        className={`
-          p-2 rounded-md transition-colors
-          ${currentPage === totalPages 
-            ? 'bg-gray-50 text-gray-400 cursor-not-allowed' 
-            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700'
-          }
-        `}
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-      >
-        <ChevronRight className="h-4 w-4" />
-      </button>
-    </div>
-
-    {/* dont show this div when in mobile view */}
-    <div className="hidden sm:block"></div>
-  </div>
-)
 
 /**
  * Main lead list component that handles:
@@ -147,6 +52,7 @@ export default function LeadTable({
   onDeleteLead,
   onSort,
   currentSort,
+  onExportAll,
 }: LeadTableProps) {
   // State for search and selected leads
   const [searchTerm, setSearchTerm] = useState('')
@@ -193,46 +99,6 @@ export default function LeadTable({
     setLeads(initialLeads)
   }, [initialLeads])
 
-  const exportToCSV = (leads: Lead[]) => {
-    // Define headers
-    const headers = [
-      'Name',
-      'Company',
-      'Stage',
-      'Engaged',
-      'Last Contacted',
-      'Email'
-    ];
-
-    // Convert leads to CSV rows
-    const rows = leads.map(lead => [
-      lead.name,
-      lead.company,
-      lead.current_stage,
-      lead.engaged ? 'Yes' : 'No',
-      lead.last_contacted ? format(new Date(lead.last_contacted), 'MMM d, yyyy') : '-',
-      lead.email
-    ]);
-
-    // Combine headers and rows
-    const csvContent = [
-      headers.join(','),
-      ...rows.map(row => row.join(','))
-    ].join('\n');
-
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `leads-${format(new Date(), 'yyyy-MM-dd')}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (showMobileMenu && !(event.target as Element).closest('.mobile-menu-container')) {
@@ -272,7 +138,7 @@ export default function LeadTable({
       {/* Header Section */}
       <div className="px-4 sm:px-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h1 className="text-2xl sm:text-4xl font-[600] text-gray-900 font-fraunces">Leads</h1>
+          <h1 className="text-2xl sm:text-4xl font-[600] text-gray-900 font-fraunces">Leads</h1>
           
           {/* Desktop Actions */}
           <div className="hidden sm:flex gap-3">
@@ -283,7 +149,9 @@ export default function LeadTable({
               <Plus className="w-4 h-4 mr-2" />
               Add Lead
             </button>
-            <ExportMenu leads={leads} />
+            <ExportMenu 
+              onExportAll={onExportAll}
+            />
           </div>
 
           {/* Mobile Actions Menu */}
@@ -317,23 +185,10 @@ export default function LeadTable({
                     )}
                   </Menu.Item>
                   <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => exportToCSV(leads)}
-                        className={`
-                          flex w-full items-center px-4 py-2 text-sm
-                          ${active ? 'bg-gray-50' : ''}
-                        `}
-                      >
-                        <svg 
-                          className="h-4 w-4 mr-3 text-gray-400" 
-                          viewBox="0 0 20 20" 
-                          fill="currentColor"
-                        >
-                          <path d="M13 8V2H7v6H2l8 8 8-8h-5zM0 18h20v2H0v-2z"/>
-                        </svg>
-                        Export All
-                      </button>
+                    {() => (
+                      <ExportMenu 
+                        onExportAll={onExportAll}
+                      />
                     )}
                   </Menu.Item>
                 </Menu.Items>
@@ -393,7 +248,7 @@ export default function LeadTable({
               <table className="min-w-full divide-y divide-gray-300">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="relative w-8 py-3 pl-6">
+                    <th scope="col" className="relative w-12 py-3 pl-4 sm:pl-6">
                       <input
                         type="checkbox"
                         className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
@@ -401,22 +256,22 @@ export default function LeadTable({
                         onChange={handleSelectAll}
                       />
                     </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="w-[25%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Name
                     </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="w-[30%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Company
                     </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="w-[15%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Stage
                     </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="w-[10%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Engaged
                     </th>
-                    <th scope="col" className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th scope="col" className="w-[15%] px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Last Contacted
                     </th>
-                    <th scope="col" className="w-8 py-3 pr-6">
+                    <th scope="col" className="w-[5%] py-3 pr-4 sm:pr-6">
                       <span className="sr-only">Actions</span>
                     </th>
                   </tr>
@@ -474,7 +329,7 @@ export default function LeadTable({
       </div>
 
       {/* Mobile Pagination - Outside table */}
-      <div className="block sm:hidden px-4 sm:px-6 py-4 ">
+      <div className="block sm:hidden px-4 sm:px-6 py-4">
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}

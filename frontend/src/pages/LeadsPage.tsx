@@ -14,6 +14,7 @@ import { LeadFilters } from '../types/lead'
 import LeadTable from '../components/list/LeadTable'
 import AddLeadModal from '../components/modals/AddLeadModal'
 import { showToast } from '../utils/toast'
+import { ExportService } from '../utils/exportCsv'
 
 const LeadsPage: React.FC = () => {
   // Modal state
@@ -64,6 +65,16 @@ const LeadsPage: React.FC = () => {
     }
   }
 
+  const handleExportAll = async () => {
+    try {
+      await ExportService.exportLeads(filters, totalLeads)
+      showToast.success('Export completed successfully')
+    } catch (error) {
+      showToast.error('Failed to export leads')
+      console.error('Error exporting leads:', error)
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <LeadTable 
@@ -80,6 +91,7 @@ const LeadsPage: React.FC = () => {
         onDeleteLead={handleDeleteLead}
         onSort={onSort}
         currentSort={sort}
+        onExportAll={handleExportAll}
       />
       <AddLeadModal
         isOpen={isAddModalOpen}
