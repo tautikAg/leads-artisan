@@ -17,8 +17,11 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # MongoDB configuration
-    MONGODB_URI: str = os.getenv("MONGODB_URI")  # MongoDB connection string
-    MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "leads_db")  # Database name
+    MONGODB_URI: str = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
+    MONGODB_DATABASE: str = os.getenv("MONGODB_DATABASE", "leads_db")
+    
+    # Test configuration
+    TEST_MONGODB_DATABASE: str = "leads_test_db"
 
     model_config = {
         "case_sensitive": True,

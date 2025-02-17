@@ -21,12 +21,18 @@ class CRUDLead:
         return self.db[self.collection_name]
 
     async def get(self, id: str) -> Optional[Lead]:
-        collection = self.get_collection()
-        lead_dict = await collection.find_one({"_id": ObjectId(id)})
-        if lead_dict:
-            lead_dict["id"] = str(lead_dict.pop("_id"))
-            return Lead(**lead_dict)
-        return None
+        """Get a lead by ID"""
+        try:
+            collection = self.get_collection()
+            lead_dict = await collection.find_one({"_id": ObjectId(id)})
+            if not lead_dict:
+                raise LeadNotFoundException(id)
+            return Lead(**self._convert_id(lead_dict))
+        except LeadNotFoundException:
+            raise
+        except Exception as e:
+            logger.error(f"Error getting lead: {str(e)}")
+            raise
 
     async def get_by_email(self, email: str) -> Optional[Lead]:
         """Get a single lead by email"""
