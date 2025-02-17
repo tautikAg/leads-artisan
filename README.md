@@ -3,7 +3,8 @@
 A modern, full-stack sales lead management platform featuring real-time updates, stage tracking, and comprehensive lead management capabilities. Built with React, TypeScript, and FastAPI.
 
 ## Live Deployments
-
+- **Loom Video**: [https://www.loom.com/share/afc19eb3525f40529060ddbc2796f0a5?sid=9582515c-e5cb-4e33-ae20-68db03f2bd64](https://www.loom.com/share/afc19eb3525f40529060ddbc2796f0a5?sid=9582515c-e5cb-4e33-ae20-68db03f2bd64
+)
 - **Frontend**: [https://leads-artisan.vercel.app/](https://leads-artisan.vercel.app/)
 - **Backend Health Check**: [https://leads-artisan-backend.fly.dev/health](https://leads-artisan-backend.fly.dev/health)
 
