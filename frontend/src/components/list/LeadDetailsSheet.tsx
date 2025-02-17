@@ -3,9 +3,8 @@ import { Lead } from '../../types/lead'
 import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format, parseISO } from 'date-fns'
-import { Edit2, Mail, Building2, Calendar, Save, X } from 'lucide-react'
+import {  Mail, Building2, Calendar, X } from 'lucide-react'
 import { useLeads } from '../../hooks/useLeads'
-import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css"
 import StageHistoryTimeline from '../timeline/StageHistoryTimeline'
 import { useStageHistory } from '../../hooks/useStageHistory'
@@ -15,123 +14,6 @@ interface LeadDetailsSheetProps {
   isOpen: boolean
   onClose: () => void
 }
-
-interface StageHistoryItemProps {
-  stage: StageHistoryItem;
-  isLast: boolean;
-  isEditing: boolean;
-  onEdit: () => void;
-  onSave: () => void;
-  onCancel: () => void;
-  editDate: Date | null;
-  onDateChange: (date: Date | null) => void;
-  isUpdating: boolean;
-  formatDate: (date: string | null) => string;
-}
-
-const StageHistoryItem = ({ 
-  stage, 
-  isLast, 
-  isEditing, 
-  onEdit, 
-  onSave, 
-  onCancel, 
-  editDate, 
-  onDateChange,
-  isUpdating,
-  formatDate
-}: StageHistoryItemProps) => {
-  return (
-    <div className="relative pb-8">
-      {!isLast && (
-        <span
-          className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200"
-          aria-hidden="true"
-        />
-      )}
-      <div className="relative flex space-x-3">
-        <div>
-          <span className={`
-            h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white
-            ${stage.changed_at ? 'bg-purple-100' : 'bg-gray-100'}
-            transition-colors duration-200
-          `}>
-            <div className={`
-              h-2.5 w-2.5 rounded-full 
-              ${stage.changed_at ? 'bg-purple-600' : 'bg-gray-400'}
-              transition-colors duration-200
-            `} />
-          </span>
-        </div>
-        <div className="flex min-w-0 flex-1 justify-between space-x-4 pt-1.5">
-          <div className="flex-1">
-            <p className="text-sm text-gray-900 font-medium">
-              {stage.from_stage ? 
-                `Moved from ${stage.from_stage} to ${stage.to_stage}` : 
-                `Started as ${stage.to_stage}`
-              }
-            </p>
-            {stage.notes && (
-              <p className="mt-0.5 text-sm text-gray-500">
-                {stage.notes}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {isEditing ? (
-              <div className="flex items-center gap-2 bg-white shadow-sm rounded-lg border border-gray-200 p-1.5">
-                <DatePicker
-                  selected={editDate}
-                  onChange={onDateChange}
-                  className="w-36 text-sm bg-transparent outline-none text-gray-600"
-                  dateFormat="MMM d, yyyy h:mm aa"
-                  placeholderText="Select date & time"
-                  calendarClassName="shadow-lg rounded-lg border-gray-200"
-                  showTimeSelect
-                  timeFormat="h:mm aa"
-                  timeIntervals={15}
-                  timeCaption="Time"
-                />
-                <div className="flex gap-1.5 border-l pl-1.5">
-                  <button 
-                    onClick={onSave}
-                    className={`
-                      p-1.5 rounded-md text-green-600 hover:bg-green-50
-                      transition-colors duration-200
-                      ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}
-                    `}
-                    disabled={isUpdating}
-                  >
-                    <Save className="h-3.5 w-3.5" />
-                  </button>
-                  <button 
-                    onClick={onCancel}
-                    className="p-1.5 rounded-md text-gray-400 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-gray-500 min-w-[150px] text-right">
-                  {formatDate(stage.changed_at)}
-                </span>
-                <button 
-                  onClick={onEdit}
-                  className="group p-1.5 hover:bg-gray-100 rounded-md transition-all duration-200"
-                  title="Edit date and time"
-                >
-                  <Edit2 className="h-2.5 w-2.5 text-gray-400 group-hover:text-gray-600" />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 /**
  * Slide-out sheet component that displays detailed lead information.
@@ -192,6 +74,13 @@ export default function LeadDetailsSheet({ lead, isOpen, onClose }: LeadDetailsS
                     <SheetTitle className="text-xl font-semibold">{lead.name}</SheetTitle>
                     <div className="text-sm text-gray-500">{lead.email}</div>
                   </div>
+                  {/* Add close button */}
+                  <button
+                    onClick={onClose}
+                    className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                  >
+                    <X className="h-5 w-5 text-gray-400" />
+                  </button>
                 </div>
               </SheetHeader>
             </div>
