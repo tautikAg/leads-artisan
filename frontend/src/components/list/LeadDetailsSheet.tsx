@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Lead } from '../../types/lead'
-import type { StageHistoryItem, LeadUpdate } from '../../types/lead'
+import type {  LeadUpdate } from '../../types/lead'
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '../common/Sheet'
 import { format, parseISO } from 'date-fns'
 import {  Mail, Building2, Calendar, X } from 'lucide-react'
