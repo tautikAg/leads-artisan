@@ -272,7 +272,7 @@ export default function LeadTable({
       {/* Header Section */}
       <div className="px-4 sm:px-0">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-        <h1 className="text-xl sm:text-2xl font-[600] text-gray-900 font-fraunces">Leads</h1>
+        <h1 className="text-2xl sm:text-4xl font-[600] text-gray-900 font-fraunces">Leads</h1>
           
           {/* Desktop Actions */}
           <div className="hidden sm:flex gap-3">
