@@ -7,10 +7,6 @@ A modern, full-stack sales lead management platform featuring real-time updates,
 - **Frontend**: [https://leads-artisan.vercel.app/](https://leads-artisan.vercel.app/)
 - **Backend Health Check**: [https://leads-artisan-backend.fly.dev/health](https://leads-artisan-backend.fly.dev/health)
 
-## Detailed Documentation
-
-For comprehensive design documentation and architecture details, please refer to our [Design Document](https://docs.google.com/document/d/1Hjf6Yy5v_NCneEaX5vYUjC3TWKsEpcFx5eEF5YBHNoc/edit?tab=t.0).
-
 ## Core Features
 
 ### Lead Management
