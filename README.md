@@ -123,24 +123,8 @@ uvicorn app.main:app --reload
 
 ## Testing
 
-### Frontend Testing
-```bash
-npm run test
-```
-
 ### Backend Testing
 ```bash
 pytest
 ```
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Commit changes
-4. Push to the branch
-5. Create a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
