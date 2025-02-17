@@ -22,7 +22,7 @@ export const leadsApi = {
       ...(search && { search }),
     });
 
-    const { data } = await api.get<PaginatedResponse<Lead>>(`/leads?${params}`);
+    const { data } = await api.get<PaginatedResponse<Lead>>(`/leads/?${params}`);
     return data;
   },
 

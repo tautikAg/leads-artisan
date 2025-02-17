@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { showToast } from '../utils/toast';
 
-const baseURL = 'https://leads-artisan-backend.fly.dev/api/v1'
+const baseURL = import.meta.env.VITE_API_URL || 'https://leads-artisan-backend.fly.dev/api/v1';
 
 export const api = axios.create({
   baseURL,
