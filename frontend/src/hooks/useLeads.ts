@@ -122,18 +122,30 @@ export function useLeads(initialFilters: LeadFilters): UseLeadsReturn {
       return await leadsApi.updateLead(id, updateData);
     },
     onSuccess: (updatedLead) => {
-      queryClient.setQueryData<PaginatedResponse<Lead>>(
-        ['leads'],
+      queryClient.setQueriesData<PaginatedResponse<Lead>>(
+        { queryKey: ['leads'] },
         (old: PaginatedResponse<Lead> | undefined) => {
           if (!old) return old;
           return {
             ...old,
             items: old.items.map((lead: Lead) =>
-              lead.id === updatedLead.id ? updatedLead : lead
+              lead.id === updatedLead.id ? {
+                ...lead,
+                ...updatedLead,
+                stage_history: updatedLead.stage_history,
+                stage_updated_at: updatedLead.stage_updated_at,
+                current_stage: updatedLead.current_stage,
+                status: updatedLead.status,
+                engaged: updatedLead.engaged
+              } : lead
             ),
           };
         }
       );
+
+      queryClient.invalidateQueries({ 
+        queryKey: ['leads']
+      });
     },
     onError: (error) => {
       console.error('Update mutation error:', error);
