@@ -94,7 +94,8 @@ export default function Pagination({
       </div>
 
       {/* dont show this div when in mobile view */}
-      <div className="hidden sm:block"></div>
+      <div className="hidden sm:block sm:w-32">
+      </div>
     </div>
   )
 } 
